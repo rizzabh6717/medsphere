@@ -19,10 +19,34 @@ const OTP = () => {
   const [canResend, setCanResend] = useState(false);
   const [attempts, setAttempts] = useState(0);
 
-  const phone = location.state?.phone || "+91 11 ****99";
+  const phone = location.state?.phone;
   const email = location.state?.email;
   const from = location.state?.from;
   const userName = location.state?.name;
+
+  // Mask email or phone for display
+  const maskContact = (contact: string) => {
+    if (!contact) return "";
+    
+    // Check if it's an email
+    if (contact.includes('@')) {
+      const [username, domain] = contact.split('@');
+      if (username.length <= 2) {
+        return `${username}***@${domain}`;
+      }
+      return `${username.slice(0, 2)}***@${domain}`;
+    }
+    
+    // It's a phone number
+    const digits = contact.replace(/\D/g, ''); // Remove non-digits
+    if (digits.length >= 10) {
+      // Show last 2 digits
+      return `+${digits.slice(0, 2)} ${digits.slice(2, 4)} ****${digits.slice(-2)}`;
+    }
+    return contact;
+  };
+
+  const displayContact = maskContact(email || phone || "");
 
   // Get stored OTP from localStorage
   const storedOTP = localStorage.getItem('tempOTP');
@@ -135,7 +159,7 @@ const OTP = () => {
             OTP Code Verification
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            Code has been sent to {phone}
+            Code has been sent to {displayContact}
           </p>
 
           <div className="flex justify-center mb-8">
