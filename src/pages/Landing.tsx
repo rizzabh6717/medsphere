@@ -343,7 +343,7 @@ const Landing = () => {
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <Heart className="w-8 h-8 text-primary fill-primary" />
-                <span className="text-2xl font-bold text-foreground">Medical AI</span>
+                <span className="text-2xl font-bold text-foreground">MedSphere</span>
               </div>
               <p className="text-muted-foreground mb-4">
                 When it becomes about medical health then it is a crucial decision in anyone lives 
