@@ -36,66 +36,7 @@ const DoctorDashboard = () => {
     { label: "Treatments", value: 0, icon: Heart, color: "bg-red-500" },
   ]);
 
-  const stats = [
-    { label: "Patients", value: 666, icon: Users, color: "bg-purple-500" },
-    { label: "Records", value: 889, icon: FileText, color: "bg-blue-500" },
-    { label: "Appointments", value: 211, icon: Calendar, color: "bg-green-500" },
-    { label: "Treatments", value: 402, icon: Heart, color: "bg-red-500" },
-  ];
-
   // Removed mock data; compute from storage
-    {
-      id: 1,
-      name: "Beth Mccoy",
-      type: "Scaling",
-      time: "On Going",
-      status: "ongoing",
-      photo: null,
-    },
-    {
-      id: 2,
-      name: "Evan Henry",
-      type: "Medical check up",
-      time: "12:00",
-      status: "scheduled",
-      photo: null,
-    },
-    {
-      id: 3,
-      name: "Dwight Murphy",
-      type: "Priksa masuk angin",
-      time: "14:00",
-      status: "scheduled",
-      photo: null,
-    },
-    {
-      id: 4,
-      name: "Bessie Alexander",
-      type: "Scaling",
-      time: "14:00",
-      status: "scheduled",
-      photo: null,
-    },
-  ];
-
-  // Removed mock data; compute from storage
-    {
-      id: 1,
-      name: "Devon Cooper",
-      type: "Scaling",
-      date: "29 February",
-      time: "10:00",
-      status: "pending",
-    },
-    {
-      id: 2,
-      name: "Ricardo Russell",
-      type: "Tambal gigi",
-      date: "29 February",
-      time: "11:00",
-      status: "accepted",
-    },
-  ];
 
   const nextPatient = appointments.length > 0 ? {
     name: appointments[0].patientName,
@@ -120,21 +61,6 @@ const DoctorDashboard = () => {
     phone: "",
     conditions: [],
   };
-    name: "Beth Mccoy",
-    address: "2235 Avondale Ave Pasadena, Oklahoma 83900",
-    dob: "29 February 1999",
-    sex: "Female",
-    weight: "56 kg",
-    height: "172 cm",
-    lastAppointment: "02 Jan 2020",
-    registerDate: "19 Dec 2018",
-    phone: "(308) 555-0121",
-    conditions: [
-      { name: "Asthma", color: "bg-yellow-100 text-yellow-800" },
-      { name: "Hypertension", color: "bg-green-100 text-green-800" },
-      { name: "Asam Urat", color: "bg-purple-100 text-purple-800" },
-    ],
-  };
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", value: "dashboard" },
@@ -147,7 +73,7 @@ const DoctorDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("userRole");
     localStorage.removeItem("isAuthenticated");
-    navigate("/login");
+    navigate("/user");
   };
 
   useEffect(() => {
