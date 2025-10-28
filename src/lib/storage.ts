@@ -15,6 +15,7 @@ export interface Appointment {
   paid: boolean;
   tokenNumber: number;
   createdAt: string;
+  accepted?: boolean; // whether doctor accepted the appointment
 }
 
 export interface FamilyMember {
@@ -71,6 +72,7 @@ export const saveAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt
     id: `apt-${Date.now()}`,
     tokenNumber: Math.floor(Math.random() * 100) + 1,
     createdAt: new Date().toISOString(),
+    accepted: false,
   };
   appointments.push(newAppointment);
   localStorage.setItem('appointments', JSON.stringify(appointments));

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
+import { updateAppointment } from "@/lib/storage";
 import {
   Bell,
   HelpCircle,
@@ -30,6 +31,7 @@ const DoctorDashboard = () => {
   const [doctorProfile, setDoctorProfile] = useState<{ id: string; name: string; specialty: string } | null>(null);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
+  const acceptedAppointments = appointments.filter(a => a.accepted && a.status !== 'cancelled');
   const [stats, setStats] = useState([
     { label: "Patients", value: 0, icon: Users, color: "bg-purple-500" },
     { label: "Records", value: 0, icon: FileText, color: "bg-blue-500" },
@@ -116,7 +118,7 @@ const DoctorDashboard = () => {
     } as any)[t] || "bg-secondary text-foreground";
 
   // filtering
-  const filteredAppointments = appointments.filter((a) => {
+  const filteredAppointments = acceptedAppointments.filter((a) => {
     const matchesName = scheduleQuery
       ? (a.patientName || "").toLowerCase().includes(scheduleQuery.toLowerCase())
       : true;
@@ -126,7 +128,9 @@ const DoctorDashboard = () => {
 
   const uniquePatients = Array.from(
     new Map(
-      appointments.map((a) => [a.patientPhone, { name: a.patientName, phone: a.patientPhone, lastVisit: a.date }])
+      appointments
+        .filter((a) => a.status === 'completed' && typeOfApt(a.symptoms) === 'checkup')
+        .map((a) => [a.patientPhone, { name: a.patientName, phone: a.patientPhone, lastVisit: a.date }])
     ).values()
   );
 
@@ -153,7 +157,7 @@ const DoctorDashboard = () => {
       const filtered = profile.id === 'unknown' ? [] : allApts.filter((a: any) => a.doctorId === profile.id);
       setAppointments(filtered);
       const today = new Date().toDateString();
-      const todays = filtered.filter((a: any) => new Date(a.date).toDateString() === today && a.status === 'upcoming');
+      const todays = filtered.filter((a: any) => new Date(a.date).toDateString() === today && a.status === 'upcoming' && a.accepted);
       setTodayAppointments(todays);
       const totalPatients = new Set(filtered.map(a => a.patientPhone)).size;
       const totalAppointments = filtered.length;
@@ -345,7 +349,7 @@ const DoctorDashboard = () => {
                   </Button>
                 </div>
                 <div className="space-y-3">
-                  {appointments.filter(a => a.status === 'upcoming').map((req) => (
+                  {appointments.filter(a => a.status === 'upcoming' && !a.accepted && new Date(a.date) >= new Date(new Date().toDateString())).map((req) => (
                     <div
                       key={req.id}
                       className="flex items-center justify-between p-4 bg-secondary rounded-xl"
@@ -365,10 +369,18 @@ const DoctorDashboard = () => {
                       </div>
                       {true ? (
                         <div className="flex items-center gap-2">
-                          <button className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-all">
+                          <button
+                            onClick={() => updateAppointment(req.id, { accepted: true })}
+                            className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-all"
+                            title="Accept"
+                          >
                             <Check className="w-5 h-5" />
                           </button>
-                          <button className="p-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-all">
+                          <button
+                            onClick={() => updateAppointment(req.id, { status: 'cancelled' })}
+                            className="p-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-all"
+                            title="Reject"
+                          >
                             <X className="w-5 h-5" />
                           </button>
                         </div>
