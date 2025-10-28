@@ -141,10 +141,10 @@ const Dashboard = () => {
   });
 
   const quickActions = [
-    { icon: Stethoscope, label: "Find a Doctor", path: "/dashboard" },
-    { icon: Calendar, label: "Appointments", path: "/appointments" },
-    { icon: FileText, label: "Records", path: "/records" },
-    { icon: User, label: "Profile", path: "/profile" },
+    { icon: Stethoscope, label: "Find a Doctor", path: "/patient/dashboard" },
+    { icon: Calendar, label: "Appointments", path: "/patient/appointments" },
+    { icon: FileText, label: "Records", path: "/patient/records" },
+    { icon: User, label: "Profile", path: "/patient/profile" },
   ];
 
   return (
@@ -166,7 +166,7 @@ const Dashboard = () => {
               variant="outline"
               size="icon"
               className="rounded-full"
-              onClick={() => navigate("/profile")}
+              onClick={() => navigate("/patient/profile")}
             >
               <User className="w-5 h-5" />
             </Button>
@@ -220,7 +220,7 @@ const Dashboard = () => {
               key={doctor.id}
               className="bg-card rounded-2xl shadow-card hover:shadow-hover transition-all p-6 cursor-pointer animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
-              onClick={() => navigate(`/doctor/${doctor.id}`)}
+              onClick={() => navigate(`/patient/doctor/${doctor.id}`)}
             >
               <div className="flex gap-4">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-card flex items-center justify-center flex-shrink-0">
@@ -249,8 +249,8 @@ const Dashboard = () => {
                     <Clock className="w-4 h-4" />
                     <span>{doctor.timing}</span>
                   </div>
-                  <div className="px-3 py-1 bg-primary-light rounded-full">
-                    <span className="text-primary text-xs font-medium">
+                  <div className="px-3 py-1 bg-green-100 rounded-full">
+                    <span className="text-green-700 text-xs font-medium">
                       {doctor.availability}
                     </span>
                   </div>
@@ -261,9 +261,9 @@ const Dashboard = () => {
               </div>
 
               <Button 
-                className="w-full mt-4 rounded-xl" 
+                className="w-full mt-4 rounded-xl bg-[#5B68EE] hover:bg-[#4A56DD]" 
                 size="lg"
-                onClick={() => navigate('/book-appointment', { 
+                onClick={() => navigate('/patient/book-appointment', { 
                   state: { 
                     doctorId: doctor.id, 
                     doctorName: doctor.name, 

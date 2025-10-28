@@ -29,7 +29,7 @@ const Reschedule = () => {
         setDate(new Date(found.date));
       } else {
         toast.error("Appointment not found");
-        navigate("/appointments");
+        navigate("/patient/appointments");
       }
     }
   }, [id, location.state, navigate]);
@@ -70,7 +70,7 @@ const Reschedule = () => {
 
     toast.success("Appointment rescheduled successfully!");
     setTimeout(() => {
-      navigate("/appointments");
+      navigate("/patient/appointments");
     }, 1500);
   };
 
@@ -98,7 +98,7 @@ const Reschedule = () => {
 
       toast.success("Appointment cancelled. Refund will be processed in 3-5 business days.");
       setTimeout(() => {
-        navigate("/appointments");
+        navigate("/patient/appointments");
       }, 2000);
     }
   };
@@ -106,7 +106,7 @@ const Reschedule = () => {
   return (
     <div className="min-h-screen bg-gradient-medical py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        <BackButton to="/appointments" />
+        <BackButton to="/patient/appointments" />
         <h1 className="text-3xl font-bold mb-6 animate-fade-in">Reschedule Appointment</h1>
 
         {appointment && (
@@ -140,7 +140,7 @@ const Reschedule = () => {
                 key={slot}
                 variant={selectedSlot === slot ? "default" : "outline"}
                 onClick={() => setSelectedSlot(slot)}
-                className="justify-start"
+                className={`justify-start ${selectedSlot === slot ? 'bg-[#5B68EE] hover:bg-[#4A56DD]' : ''}`}
               >
                 <Clock className="w-4 h-4 mr-2" />
                 {slot}
@@ -152,7 +152,7 @@ const Reschedule = () => {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            onClick={() => navigate("/appointments")}
+            onClick={() => navigate("/patient/appointments")}
             className="flex-1"
           >
             Go Back
@@ -164,7 +164,7 @@ const Reschedule = () => {
           >
             Cancel Appointment
           </Button>
-          <Button onClick={handleReschedule} className="flex-1">
+          <Button onClick={handleReschedule} className="flex-1 bg-[#5B68EE] hover:bg-[#4A56DD]">
             Confirm Reschedule
           </Button>
         </div>

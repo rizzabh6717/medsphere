@@ -95,7 +95,7 @@ const AppointmentScheduled = () => {
               <Calendar className="w-4 h-4 mr-2" />
               Add to Calendar
             </Button>
-            <Button onClick={() => navigate("/appointments")} className="flex-1">
+            <Button onClick={() => navigate("/patient/appointments")} className="flex-1 bg-[#5B68EE] hover:bg-[#4A56DD]">
               View My Appointments
             </Button>
           </div>

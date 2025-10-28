@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer";
 import { ArrowRight, Heart, Users, Shield, Clock, Star, Activity } from "lucide-react";
 import heroDoctorImage from "@/assets/hero-doctor.jpg";
 import familyConsultation from "@/assets/family-consultation.jpg";
@@ -62,7 +63,7 @@ const Landing = () => {
         </div>
         <Button 
           onClick={() => navigate("/login")} 
-          className="bg-foreground text-background hover:bg-foreground/90 rounded-full px-6"
+          className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white rounded-full px-6"
         >
           Get Started
         </Button>
@@ -87,7 +88,7 @@ const Landing = () => {
             <Button 
               onClick={() => navigate("/login")} 
               size="lg"
-              className="bg-foreground text-background hover:bg-foreground/90 rounded-full px-8"
+              className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white rounded-full px-8"
             >
               Find Now
             </Button>
@@ -327,48 +328,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-card py-12">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Navigation</h4>
-              <div className="space-y-2">
-                <a href="#home" className="block text-muted-foreground hover:text-primary transition-colors">Home</a>
-                <a href="#about" className="block text-muted-foreground hover:text-primary transition-colors">Services</a>
-                <a href="#services" className="block text-muted-foreground hover:text-primary transition-colors">Doctors</a>
-                <a href="#contact" className="block text-muted-foreground hover:text-primary transition-colors">Legal</a>
-              </div>
-            </div>
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Heart className="w-8 h-8 text-primary fill-primary" />
-                <span className="text-2xl font-bold text-foreground">MedSphere</span>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                When it becomes about medical health then it is a crucial decision in anyone lives 
-                and making an appointment or booking consultations. Our platform is designed for 
-                seamless to navigated and give more flexibility to users.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Contact</h4>
-              <p className="text-muted-foreground mb-2">Call us now</p>
-              <p className="text-foreground font-medium mb-4">+91 9876543210</p>
-              <div className="flex gap-3">
-                {["facebook", "twitter", "youtube", "instagram"].map((social) => (
-                  <div key={social} className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center cursor-pointer hover:bg-primary transition-colors">
-                    <span className="text-background text-xs">{social[0].toUpperCase()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-border pt-6 text-center text-muted-foreground text-sm">
-            © 2024 MedSphere. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
