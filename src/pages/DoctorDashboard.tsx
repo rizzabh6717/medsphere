@@ -249,10 +249,10 @@ const DoctorDashboard = () => {
                         </div>
                         <div>
                           <h3 className="font-semibold text-foreground">
-                            {appointment.name}
+                            {appointment.patientName}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {appointment.type}
+                            {appointment.symptoms || 'Consultation'}
                           </p>
                         </div>
                       </div>
@@ -283,9 +283,9 @@ const DoctorDashboard = () => {
                   </Button>
                 </div>
                 <div className="space-y-3">
-                  {appointmentRequests.map((request) => (
+                  {appointments.filter(a => a.status === 'upcoming').map((req) => (
                     <div
-                      key={request.id}
+                      key={req.id}
                       className="flex items-center justify-between p-4 bg-secondary rounded-xl"
                     >
                       <div className="flex items-center gap-4">
@@ -294,14 +294,14 @@ const DoctorDashboard = () => {
                         </div>
                         <div>
                           <h3 className="font-semibold text-foreground">
-                            {request.name}
+                            {req.patientName}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {request.type} • {request.date}, {request.time}
+                            {(req.symptoms || 'Consultation')} • {new Date(req.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}, {req.time}
                           </p>
                         </div>
                       </div>
-                      {request.status === "pending" ? (
+                      {true ? (
                         <div className="flex items-center gap-2">
                           <button className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-all">
                             <Check className="w-5 h-5" />
