@@ -32,7 +32,7 @@ const DoctorDetails = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl flex-1 mb-auto">
         <Button
           variant="default"
-          onClick={() => navigate("/patient/dashboard")}
+onClick={() => navigate("/user/patient/dashboard")}
           className="mb-6 bg-[#5B68EE] hover:bg-[#4A56DD]"
         >
           Back to Dashboard
@@ -103,7 +103,7 @@ const DoctorDetails = () => {
               </div>
               <Button 
                 size="lg"
-                onClick={() => navigate('/patient/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
+onClick={() => navigate('/user/patient/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
                 className="px-8 bg-[#5B68EE] hover:bg-[#4A56DD]"
               >
                 <Clock className="w-4 h-4 mr-2" />

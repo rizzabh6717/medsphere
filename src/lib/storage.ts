@@ -59,6 +59,13 @@ export const getAppointments = (): Appointment[] => {
 
 export const saveAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt' | 'tokenNumber'>): Appointment => {
   const appointments = getAppointments();
+  // Prevent duplicate (same doctorId, date, time)
+  const duplicate = appointments.some(
+    (apt) => apt.doctorId === appointment.doctorId && apt.date === appointment.date && apt.time === appointment.time
+  );
+  if (duplicate) {
+    throw new Error('Time slot already booked for this doctor.');
+  }
   const newAppointment: Appointment = {
     ...appointment,
     id: `apt-${Date.now()}`,
@@ -67,6 +74,8 @@ export const saveAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt
   };
   appointments.push(newAppointment);
   localStorage.setItem('appointments', JSON.stringify(appointments));
+  // Dispatch event to notify listeners (doctor dashboard)
+  window.dispatchEvent(new CustomEvent('appointments:updated'));
   return newAppointment;
 };
 
@@ -76,6 +85,7 @@ export const updateAppointment = (id: string, updates: Partial<Appointment>): vo
   if (index !== -1) {
     appointments[index] = { ...appointments[index], ...updates };
     localStorage.setItem('appointments', JSON.stringify(appointments));
+    window.dispatchEvent(new CustomEvent('appointments:updated'));
   }
 };
 
@@ -83,6 +93,7 @@ export const deleteAppointment = (id: string): void => {
   const appointments = getAppointments();
   const filtered = appointments.filter(apt => apt.id !== id);
   localStorage.setItem('appointments', JSON.stringify(filtered));
+  window.dispatchEvent(new CustomEvent('appointments:updated'));
 };
 
 // Family Members

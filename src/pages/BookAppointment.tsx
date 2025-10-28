@@ -49,22 +49,23 @@ const BookAppointment = () => {
       return;
     }
 
-    // Save appointment to localStorage
-    const appointment = saveAppointment({
-      doctorId: doctorId || 'unknown',
-      doctorName: doctorName || 'Doctor',
-      doctorSpecialty: doctorSpecialty || 'General',
-      date: date.toISOString(),
-      time: selectedSlot,
-      patientName: formData.name,
-      patientDob: formData.dob,
-      patientPhone: formData.phone,
-      symptoms: formData.symptoms,
-      status: 'upcoming',
-      paid: false,
-    });
+    // Save appointment to localStorage with conflict handling
+    try {
+      const appointment = saveAppointment({
+        doctorId: doctorId || 'unknown',
+        doctorName: doctorName || 'Doctor',
+        doctorSpecialty: doctorSpecialty || 'General',
+        date: date.toISOString(),
+        time: selectedSlot,
+        patientName: formData.name,
+        patientDob: formData.dob,
+        patientPhone: formData.phone,
+        symptoms: formData.symptoms,
+        status: 'upcoming',
+        paid: false,
+      });
 
-    // Add notification
+      // Add notification
     addNotification({
       type: 'appointment',
       title: 'Appointment Confirmed',
@@ -75,12 +76,16 @@ const BookAppointment = () => {
     });
 
     // Success
-    toast.success("Appointment booked successfully!");
+      toast.success("Appointment booked successfully!");
     
     // Navigate to appointments page after a short delay
     setTimeout(() => {
-      navigate("/patient/appointments");
+      navigate("/user/patient/appointments");
     }, 1500);
+    } catch (e: any) {
+      toast.error(e?.message || 'Unable to book this slot.');
+      return;
+    }
   };
 
   return (

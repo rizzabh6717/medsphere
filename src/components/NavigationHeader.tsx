@@ -27,7 +27,7 @@ const NavigationHeader = () => {
         <div className="flex items-center justify-between">
           <div
             className="flex items-center gap-2 cursor-pointer"
-            onClick={() => navigate("/patient/dashboard")}
+onClick={() => navigate("/user/patient/dashboard")}
           >
             <HeartPulse className="w-6 h-6 text-primary" />
             <span className="text-xl font-bold text-foreground">MedSphere</span>
@@ -37,7 +37,7 @@ const NavigationHeader = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/patient/notifications")}
+onClick={() => navigate("/user/patient/notifications")}
               className="relative hover:bg-[#5B68EE]/10"
             >
               <Bell className="w-5 h-5 text-[#5B68EE]" />
@@ -55,28 +55,28 @@ const NavigationHeader = () => {
               <DropdownMenuContent align="end" className="w-56 bg-card">
                 <DropdownMenuLabel>Quick Access</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/patient/appointments")}>
+<DropdownMenuItem onClick={() => navigate("/user/patient/appointments")}>
                   <Users className="w-4 h-4 mr-2" />
                   My Appointments
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/patient/friends-family")}>
+<DropdownMenuItem onClick={() => navigate("/user/patient/friends-family")}>
                   <UserPlus className="w-4 h-4 mr-2" />
                   Friends & Family
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/patient/co-patient")}>
+<DropdownMenuItem onClick={() => navigate("/user/patient/co-patient")}>
                   <Users className="w-4 h-4 mr-2" />
                   Co-Patient Groups
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/patient/queue")}>
+<DropdownMenuItem onClick={() => navigate("/user/patient/queue")}>
                   <HeartPulse className="w-4 h-4 mr-2" />
                   Queue Tracking
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/patient/support")}>
+<DropdownMenuItem onClick={() => navigate("/user/patient/support")}>
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Customer Support
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/patient/feedback/new")}>
+<DropdownMenuItem onClick={() => navigate("/user/patient/feedback/new")}>
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Give Feedback
                 </DropdownMenuItem>

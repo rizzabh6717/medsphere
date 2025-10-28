@@ -12,6 +12,12 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [role, setRole] = useState<"patient" | "doctor">("patient");
+  
+  const handleRoleSelect = (newRole: "patient" | "doctor") => {
+    setRole(newRole);
+    // Update URL to reflect selection as requested
+    navigate(`/user/${newRole}`, { replace: true });
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +64,7 @@ const Login = () => {
               <div className="flex gap-2 p-1 bg-secondary rounded-xl">
                 <button
                   type="button"
-                  onClick={() => setRole("patient")}
+                  onClick={() => handleRoleSelect("patient")}
                   className={`flex-1 py-3 rounded-lg font-medium transition-all ${
                     role === "patient"
                       ? "bg-[#5B68EE] text-white shadow-sm"
@@ -69,7 +75,7 @@ const Login = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRole("doctor")}
+                  onClick={() => handleRoleSelect("doctor")}
                   className={`flex-1 py-3 rounded-lg font-medium transition-all ${
                     role === "doctor"
                       ? "bg-[#5B68EE] text-white shadow-sm"

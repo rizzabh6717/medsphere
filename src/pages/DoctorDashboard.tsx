@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -26,6 +26,15 @@ const DoctorDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [doctorProfile, setDoctorProfile] = useState<{ id: string; name: string; specialty: string } | null>(null);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
+  const [stats, setStats] = useState([
+    { label: "Patients", value: 0, icon: Users, color: "bg-purple-500" },
+    { label: "Records", value: 0, icon: FileText, color: "bg-blue-500" },
+    { label: "Appointments", value: 0, icon: Calendar, color: "bg-green-500" },
+    { label: "Treatments", value: 0, icon: Heart, color: "bg-red-500" },
+  ]);
 
   const stats = [
     { label: "Patients", value: 666, icon: Users, color: "bg-purple-500" },
@@ -34,7 +43,7 @@ const DoctorDashboard = () => {
     { label: "Treatments", value: 402, icon: Heart, color: "bg-red-500" },
   ];
 
-  const todayAppointments = [
+  // Removed mock data; compute from storage
     {
       id: 1,
       name: "Beth Mccoy",
@@ -69,7 +78,7 @@ const DoctorDashboard = () => {
     },
   ];
 
-  const appointmentRequests = [
+  // Removed mock data; compute from storage
     {
       id: 1,
       name: "Devon Cooper",
@@ -88,7 +97,29 @@ const DoctorDashboard = () => {
     },
   ];
 
-  const nextPatient = {
+  const nextPatient = appointments.length > 0 ? {
+    name: appointments[0].patientName,
+    address: "",
+    dob: appointments[0].patientDob || "",
+    sex: "",
+    weight: "",
+    height: "",
+    lastAppointment: "",
+    registerDate: "",
+    phone: appointments[0].patientPhone || "",
+    conditions: [],
+  } : {
+    name: "",
+    address: "",
+    dob: "",
+    sex: "",
+    weight: "",
+    height: "",
+    lastAppointment: "",
+    registerDate: "",
+    phone: "",
+    conditions: [],
+  };
     name: "Beth Mccoy",
     address: "2235 Avondale Ave Pasadena, Oklahoma 83900",
     dob: "29 February 1999",
@@ -119,6 +150,41 @@ const DoctorDashboard = () => {
     navigate("/login");
   };
 
+  useEffect(() => {
+    const load = () => {
+      const raw = localStorage.getItem('doctorProfile');
+      let profile = raw ? JSON.parse(raw) : null;
+      const allApts = JSON.parse(localStorage.getItem('appointments') || '[]');
+      if (!profile) {
+        if (allApts.length > 0) {
+          profile = { id: allApts[0].doctorId, name: allApts[0].doctorName, specialty: allApts[0].doctorSpecialty };
+          localStorage.setItem('doctorProfile', JSON.stringify(profile));
+        } else {
+          profile = { id: 'unknown', name: 'Doctor', specialty: '' };
+        }
+      }
+      setDoctorProfile(profile);
+      const filtered = profile.id === 'unknown' ? [] : allApts.filter((a: any) => a.doctorId === profile.id);
+      setAppointments(filtered);
+      const today = new Date().toDateString();
+      const todays = filtered.filter((a: any) => new Date(a.date).toDateString() === today && a.status === 'upcoming');
+      setTodayAppointments(todays);
+      const totalPatients = new Set(filtered.map(a => a.patientPhone)).size;
+      const totalAppointments = filtered.length;
+      const completed = filtered.filter(a => a.status === 'completed').length;
+      setStats([
+        { label: "Patients", value: totalPatients, icon: Users, color: "bg-purple-500" },
+        { label: "Records", value: completed, icon: FileText, color: "bg-blue-500" },
+        { label: "Appointments", value: totalAppointments, icon: Calendar, color: "bg-green-500" },
+        { label: "Treatments", value: completed, icon: Heart, color: "bg-red-500" },
+      ]);
+    };
+    load();
+    const handler = () => load();
+    window.addEventListener('appointments:updated', handler);
+    return () => window.removeEventListener('appointments:updated', handler);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-medical flex">
       {/* Sidebar */}
@@ -138,8 +204,8 @@ const DoctorDashboard = () => {
           </div>
           {sidebarOpen && (
             <>
-              <h2 className="text-xl font-bold text-foreground">Dr. Stranger</h2>
-              <p className="text-sm text-muted-foreground">Dentist</p>
+              <h2 className="text-xl font-bold text-foreground">{doctorProfile?.name || 'Doctor'}</h2>
+              <p className="text-sm text-muted-foreground">{doctorProfile?.specialty || ''}</p>
             </>
           )}
         </div>

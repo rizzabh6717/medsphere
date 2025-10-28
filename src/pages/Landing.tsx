@@ -86,14 +86,14 @@ const Landing = () => {
           </p>
           <div className="flex gap-4">
             <Button 
-              onClick={() => navigate("/login")} 
+onClick={() => navigate("/user")} 
               size="lg"
               className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white rounded-full px-8"
             >
               Find Now
             </Button>
             <Button 
-              onClick={() => navigate("/login")}
+onClick={() => navigate("/user")}
               variant="outline" 
               size="lg"
               className="rounded-full px-8 border-foreground text-foreground hover:bg-foreground/5"

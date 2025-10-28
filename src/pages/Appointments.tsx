@@ -8,10 +8,13 @@ import { Calendar, Clock, CreditCard, RefreshCw, X } from "lucide-react";
 import NavigationHeader from "@/components/NavigationHeader";
 import Footer from "@/components/Footer";
 import { getAppointments, type Appointment } from "@/lib/storage";
+import RescheduleModal from "@/components/RescheduleModal";
 
 const Appointments = () => {
   const navigate = useNavigate();
   const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
     // Load appointments from localStorage
@@ -74,7 +77,7 @@ const Appointments = () => {
               <Button
                 size="sm"
                 className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white"
-                onClick={() => navigate(`/patient/reschedule/${appointment.id}`, { state: { appointment } })}
+                onClick={() => { setSelectedAppointment(appointment); setRescheduleOpen(true); }}
               >
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Reschedule
@@ -84,7 +87,7 @@ const Appointments = () => {
           {status === "completed" && (
             <Button
               size="sm"
-              onClick={() => navigate(`/patient/feedback/${appointment.id}`)}
+onClick={() => navigate(`/user/patient/feedback/${appointment.id}`)}
               className="bg-[#5B68EE] hover:bg-[#4A56DD]"
             >
               Give Feedback
@@ -137,7 +140,7 @@ const Appointments = () => {
                 <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No Upcoming Appointments</h3>
                 <p className="text-muted-foreground mb-6">You don't have any upcoming appointments</p>
-                <Button onClick={() => navigate('/patient/dashboard')} className="bg-[#5B68EE] hover:bg-[#4A56DD]">Book an Appointment</Button>
+<Button onClick={() => navigate('/user/patient/dashboard')} className="bg-[#5B68EE] hover:bg-[#4A56DD]">
               </Card>
             )}
           </TabsContent>
@@ -174,6 +177,7 @@ const Appointments = () => {
           © {new Date().getFullYear()} MedSphere. All rights reserved.
         </div>
       </div>
+      <RescheduleModal open={rescheduleOpen} onOpenChange={setRescheduleOpen} appointment={selectedAppointment} />
     </div>
   );
 };

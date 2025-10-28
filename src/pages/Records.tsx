@@ -158,7 +158,7 @@ const Records = () => {
                 <p className="text-muted-foreground mb-6">
                   Your medical records and prescriptions will appear here after completed appointments
                 </p>
-                <Button onClick={() => window.location.href = '/patient/dashboard'} className="bg-[#5B68EE] hover:bg-[#4A56DD]">
+<Button onClick={() => window.location.href = '/user/patient/dashboard'} className="bg-[#5B68EE] hover:bg-[#4A56DD]">
                   Book an Appointment
                 </Button>
               </Card>

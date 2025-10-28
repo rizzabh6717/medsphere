@@ -111,9 +111,9 @@ const OTP = () => {
       
       // Navigate based on role
       if (userRole === 'doctor') {
-        navigate("/doctor/dashboard");
+        navigate("/user/doctor/dashboard");
       } else {
-        navigate("/patient/dashboard");
+        navigate("/user/patient/dashboard");
       }
     } else {
       setAttempts(attempts + 1);

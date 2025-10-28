@@ -72,7 +72,7 @@ const Profile = () => {
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully!");
-    navigate("/login");
+navigate("/user");
   };
 
   return (

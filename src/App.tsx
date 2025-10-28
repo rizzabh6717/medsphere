@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { initializeDefaultData } from "@/lib/storage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
@@ -44,31 +44,35 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
+          {/* Login + OTP */}
+          <Route path="/login" element={<Navigate to="/user" replace />} />
+          <Route path="/user" element={<Login />} />
+          <Route path="/user/patient" element={<Login />} />
+          <Route path="/user/doctor" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/otp" element={<OTP />} />
           
           {/* Patient Routes */}
-          <Route path="/patient/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/patient/doctor/:id" element={<ProtectedRoute><DoctorDetails /></ProtectedRoute>} />
-          <Route path="/patient/book-appointment" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
-          <Route path="/patient/patient-details" element={<ProtectedRoute><PatientDetails /></ProtectedRoute>} />
-          <Route path="/patient/appointment-scheduled" element={<ProtectedRoute><AppointmentScheduled /></ProtectedRoute>} />
-          <Route path="/patient/chat/:doctorId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-          <Route path="/patient/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
-          <Route path="/patient/appointment/:id" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
-          <Route path="/patient/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-          <Route path="/patient/reschedule/:id" element={<ProtectedRoute><Reschedule /></ProtectedRoute>} />
-          <Route path="/patient/feedback/:id" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
-          <Route path="/patient/friends-family" element={<ProtectedRoute><FriendsFamily /></ProtectedRoute>} />
-          <Route path="/patient/co-patient" element={<ProtectedRoute><CoPatient /></ProtectedRoute>} />
-          <Route path="/patient/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-          <Route path="/patient/queue" element={<ProtectedRoute><QueueTracking /></ProtectedRoute>} />
-          <Route path="/patient/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/patient/records" element={<ProtectedRoute><Records /></ProtectedRoute>} />
+          <Route path="/user/patient/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/user/patient/doctor/:id" element={<ProtectedRoute><DoctorDetails /></ProtectedRoute>} />
+          <Route path="/user/patient/book-appointment" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
+          <Route path="/user/patient/patient-details" element={<ProtectedRoute><PatientDetails /></ProtectedRoute>} />
+          <Route path="/user/patient/appointment-scheduled" element={<ProtectedRoute><AppointmentScheduled /></ProtectedRoute>} />
+          <Route path="/user/patient/chat/:doctorId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/user/patient/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
+          <Route path="/user/patient/appointment/:id" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
+          <Route path="/user/patient/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/user/patient/reschedule/:id" element={<ProtectedRoute><Reschedule /></ProtectedRoute>} />
+          <Route path="/user/patient/feedback/:id" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
+          <Route path="/user/patient/friends-family" element={<ProtectedRoute><FriendsFamily /></ProtectedRoute>} />
+          <Route path="/user/patient/co-patient" element={<ProtectedRoute><CoPatient /></ProtectedRoute>} />
+          <Route path="/user/patient/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+          <Route path="/user/patient/queue" element={<ProtectedRoute><QueueTracking /></ProtectedRoute>} />
+          <Route path="/user/patient/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/user/patient/records" element={<ProtectedRoute><Records /></ProtectedRoute>} />
           
           {/* Doctor Routes */}
-          <Route path="/doctor/dashboard" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
+          <Route path="/user/doctor/dashboard" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
