@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Heart, Mail } from "lucide-react";
+import { findDoctorByEmail } from "@/lib/doctors";
 import { toast } from "sonner";
 
 const Login = () => {
@@ -24,6 +25,20 @@ const Login = () => {
     if (!email) {
       toast.error("Please enter your email or mobile number");
       return;
+    }
+
+    // If doctor role, validate email maps to known doctor and store profile
+    if (role === 'doctor') {
+      if (!email.includes('@')) {
+        toast.error('Please enter doctor email as name@gmail.com');
+        return;
+      }
+      const doc = findDoctorByEmail(email);
+      if (!doc) {
+        toast.error('No matching doctor found for this email');
+        return;
+      }
+      localStorage.setItem('doctorProfile', JSON.stringify({ id: String(doc.id), name: doc.name, specialty: doc.specialization }));
     }
     
     // Generate a random 6-digit OTP
