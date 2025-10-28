@@ -12,6 +12,7 @@ import Signup from "./pages/Signup";
 import OTP from "./pages/OTP";
 import Dashboard from "./pages/Dashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import BodyView from "./pages/BodyView";
 import DoctorDetails from "./pages/DoctorDetails";
 import BookAppointment from "./pages/BookAppointment";
 import PatientDetails from "./pages/PatientDetails";
@@ -73,6 +74,7 @@ const App = () => {
           
           {/* Doctor Routes */}
           <Route path="/user/doctor/dashboard" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
+          <Route path="/user/doctor/body-view" element={<ProtectedRoute><BodyView /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
