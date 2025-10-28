@@ -141,10 +141,10 @@ const Dashboard = () => {
   });
 
   const quickActions = [
-    { icon: Stethoscope, label: "Find a Doctor", path: "/patient/dashboard" },
-    { icon: Calendar, label: "Appointments", path: "/patient/appointments" },
-    { icon: FileText, label: "Records", path: "/patient/records" },
-    { icon: User, label: "Profile", path: "/patient/profile" },
+    { icon: Stethoscope, label: "Find a Doctor", path: "/user/patient/dashboard" },
+    { icon: Calendar, label: "Appointments", path: "/user/patient/appointments" },
+    { icon: FileText, label: "Records", path: "/user/patient/records" },
+    { icon: User, label: "Profile", path: "/user/patient/profile" },
   ];
 
   return (
@@ -166,7 +166,7 @@ const Dashboard = () => {
               variant="outline"
               size="icon"
               className="rounded-full"
-              onClick={() => navigate("/patient/profile")}
+onClick={() => navigate("/user/patient/profile")}
             >
               <User className="w-5 h-5" />
             </Button>
@@ -220,7 +220,7 @@ const Dashboard = () => {
               key={doctor.id}
               className="bg-card rounded-2xl shadow-card hover:shadow-hover transition-all p-6 cursor-pointer animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
-              onClick={() => navigate(`/patient/doctor/${doctor.id}`)}
+onClick={() => navigate(`/user/patient/doctor/${doctor.id}`)}
             >
               <div className="flex gap-4">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-card flex items-center justify-center flex-shrink-0">
@@ -263,7 +263,7 @@ const Dashboard = () => {
               <Button 
                 className="w-full mt-4 rounded-xl bg-[#5B68EE] hover:bg-[#4A56DD]" 
                 size="lg"
-                onClick={() => navigate('/patient/book-appointment', { 
+onClick={() => navigate('/user/patient/book-appointment', {
                   state: { 
                     doctorId: doctor.id, 
                     doctorName: doctor.name, 

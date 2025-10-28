@@ -62,7 +62,7 @@ const Landing = () => {
           <a href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</a>
         </div>
         <Button 
-          onClick={() => navigate("/login")} 
+onClick={() => navigate("/user")}
           className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white rounded-full px-6"
         >
           Get Started
