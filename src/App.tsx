@@ -27,6 +27,7 @@ import Support from "./pages/Support";
 import QueueTracking from "./pages/QueueTracking";
 import Profile from "./pages/Profile";
 import Records from "./pages/Records";
+import BodyView from "./pages/BodyView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ const App = () => {
           
           {/* Doctor Routes */}
           <Route path="/user/doctor/dashboard" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
+          <Route path="/user/doctor/body-view" element={<ProtectedRoute><BodyView /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
