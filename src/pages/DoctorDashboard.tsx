@@ -1,0 +1,439 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import {
+  Bell,
+  HelpCircle,
+  Settings,
+  LayoutDashboard,
+  Calendar,
+  Users,
+  MessageSquare,
+  Pill,
+  LogOut,
+  User,
+  FileText,
+  Heart,
+  Phone,
+  MessageCircle,
+  Check,
+  X,
+  Menu,
+  ChevronLeft,
+} from "lucide-react";
+
+const DoctorDashboard = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const stats = [
+    { label: "Patients", value: 666, icon: Users, color: "bg-purple-500" },
+    { label: "Records", value: 889, icon: FileText, color: "bg-blue-500" },
+    { label: "Appointments", value: 211, icon: Calendar, color: "bg-green-500" },
+    { label: "Treatments", value: 402, icon: Heart, color: "bg-red-500" },
+  ];
+
+  const todayAppointments = [
+    {
+      id: 1,
+      name: "Beth Mccoy",
+      type: "Scaling",
+      time: "On Going",
+      status: "ongoing",
+      photo: null,
+    },
+    {
+      id: 2,
+      name: "Evan Henry",
+      type: "Medical check up",
+      time: "12:00",
+      status: "scheduled",
+      photo: null,
+    },
+    {
+      id: 3,
+      name: "Dwight Murphy",
+      type: "Priksa masuk angin",
+      time: "14:00",
+      status: "scheduled",
+      photo: null,
+    },
+    {
+      id: 4,
+      name: "Bessie Alexander",
+      type: "Scaling",
+      time: "14:00",
+      status: "scheduled",
+      photo: null,
+    },
+  ];
+
+  const appointmentRequests = [
+    {
+      id: 1,
+      name: "Devon Cooper",
+      type: "Scaling",
+      date: "29 February",
+      time: "10:00",
+      status: "pending",
+    },
+    {
+      id: 2,
+      name: "Ricardo Russell",
+      type: "Tambal gigi",
+      date: "29 February",
+      time: "11:00",
+      status: "accepted",
+    },
+  ];
+
+  const nextPatient = {
+    name: "Beth Mccoy",
+    address: "2235 Avondale Ave Pasadena, Oklahoma 83900",
+    dob: "29 February 1999",
+    sex: "Female",
+    weight: "56 kg",
+    height: "172 cm",
+    lastAppointment: "02 Jan 2020",
+    registerDate: "19 Dec 2018",
+    phone: "(308) 555-0121",
+    conditions: [
+      { name: "Asthma", color: "bg-yellow-100 text-yellow-800" },
+      { name: "Hypertension", color: "bg-green-100 text-green-800" },
+      { name: "Asam Urat", color: "bg-purple-100 text-purple-800" },
+    ],
+  };
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: "Dashboard", value: "dashboard" },
+    { icon: Calendar, label: "Schedule", value: "schedule" },
+    { icon: Users, label: "Patients", value: "patients" },
+    { icon: MessageSquare, label: "Messages", value: "messages" },
+    { icon: Pill, label: "Medicines", value: "medicines" },
+  ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("isAuthenticated");
+    navigate("/login");
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-medical flex">
+      {/* Sidebar */}
+      <aside className={`bg-card shadow-soft p-6 flex flex-col transition-all duration-300 ${
+        sidebarOpen ? 'w-72' : 'w-20'
+      }`}>
+        {/* Doctor Profile */}
+        <div className={`mb-8 transition-all duration-300 ${
+          sidebarOpen ? 'text-center' : 'text-center'
+        }`}>
+          <div className={`rounded-full bg-gradient-card mx-auto mb-4 flex items-center justify-center transition-all duration-300 ${
+            sidebarOpen ? 'w-24 h-24' : 'w-12 h-12'
+          }`}>
+            <User className={`text-primary transition-all duration-300 ${
+              sidebarOpen ? 'w-12 h-12' : 'w-6 h-6'
+            }`} />
+          </div>
+          {sidebarOpen && (
+            <>
+              <h2 className="text-xl font-bold text-foreground">Dr. Stranger</h2>
+              <p className="text-sm text-muted-foreground">Dentist</p>
+            </>
+          )}
+        </div>
+
+        {/* Navigation Menu */}
+        <nav className="flex-1 space-y-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setActiveTab(item.value)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                activeTab === item.value
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-secondary"
+              } ${!sidebarOpen ? 'justify-center' : ''}`}
+              title={!sidebarOpen ? item.label : ''}
+            >
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {sidebarOpen && <span className="font-medium">{item.label}</span>}
+            </button>
+          ))}
+        </nav>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all mt-4 ${
+            !sidebarOpen ? 'justify-center' : ''
+          }`}
+          title={!sidebarOpen ? 'Logout' : ''}
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {sidebarOpen && <span className="font-medium">Logout</span>}
+        </button>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {/* Header */}
+        <header className="bg-card shadow-soft px-8 py-6 sticky top-0 z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-xl hover:bg-secondary transition-all"
+                title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              >
+                {sidebarOpen ? (
+                  <ChevronLeft className="w-6 h-6 text-foreground" />
+                ) : (
+                  <Menu className="w-6 h-6 text-foreground" />
+                )}
+              </button>
+              <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="relative p-2 rounded-xl hover:bg-secondary transition-all">
+                <Bell className="w-6 h-6 text-foreground" />
+                <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  3
+                </span>
+              </button>
+              <button className="flex items-center gap-2 p-2 px-4 rounded-xl hover:bg-secondary transition-all">
+                <HelpCircle className="w-6 h-6 text-foreground" />
+                <span className="text-foreground font-medium">Help</span>
+              </button>
+              <button className="flex items-center gap-2 p-2 px-4 rounded-xl hover:bg-secondary transition-all">
+                <Settings className="w-6 h-6 text-foreground" />
+                <span className="text-foreground font-medium">Setting</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="p-8">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, index) => (
+              <div
+                key={index}
+                className="bg-card rounded-2xl shadow-card p-6 animate-scale-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-14 h-14 ${stat.color} rounded-xl flex items-center justify-center`}
+                  >
+                    <stat.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-6">
+            {/* Today Appointments */}
+            <div className="col-span-2 space-y-6">
+              <div className="bg-card rounded-2xl shadow-card p-6">
+                <h2 className="text-xl font-bold text-foreground mb-4">
+                  Today Appointment
+                </h2>
+                <div className="space-y-3">
+                  {todayAppointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className="flex items-center justify-between p-4 bg-secondary rounded-xl hover:shadow-sm transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-card flex items-center justify-center">
+                          <User className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            {appointment.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {appointment.type}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {appointment.status === "ongoing" ? (
+                          <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                            On Going
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            {appointment.time}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Appointment Requests */}
+              <div className="bg-card rounded-2xl shadow-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-foreground">
+                    Appointment Requests
+                  </h2>
+                  <Button variant="link" className="text-primary">
+                    See All
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {appointmentRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="flex items-center justify-between p-4 bg-secondary rounded-xl"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-card flex items-center justify-center">
+                          <User className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            {request.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {request.type} • {request.date}, {request.time}
+                          </p>
+                        </div>
+                      </div>
+                      {request.status === "pending" ? (
+                        <div className="flex items-center gap-2">
+                          <button className="p-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-all">
+                            <Check className="w-5 h-5" />
+                          </button>
+                          <button className="p-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-all">
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                          Accepted
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Next Patient Details */}
+            <div className="bg-card rounded-2xl shadow-card p-6">
+              <h2 className="text-xl font-bold text-foreground mb-4">
+                Next Patient Details
+              </h2>
+              
+              {/* Patient Photo */}
+              <div className="flex justify-center mb-4">
+                <div className="w-24 h-24 rounded-full bg-gradient-card flex items-center justify-center">
+                  <User className="w-12 h-12 text-primary" />
+                </div>
+              </div>
+
+              {/* Patient Name */}
+              <h3 className="text-xl font-bold text-center text-foreground mb-2">
+                {nextPatient.name}
+              </h3>
+              <p className="text-sm text-center text-muted-foreground mb-6">
+                {nextPatient.address}
+              </p>
+
+              {/* Patient Information Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <p className="text-xs text-muted-foreground">D.O.B</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {nextPatient.dob}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Sex</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {nextPatient.sex}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Weight</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {nextPatient.weight}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Height</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {nextPatient.height}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Last Appointment</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {nextPatient.lastAppointment}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Register Date</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {nextPatient.registerDate}
+                  </p>
+                </div>
+              </div>
+
+              {/* Medical Conditions */}
+              <div className="mb-6">
+                <p className="text-xs text-muted-foreground mb-2">Medical Conditions</p>
+                <div className="flex flex-wrap gap-2">
+                  {nextPatient.conditions.map((condition, index) => (
+                    <span
+                      key={index}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${condition.color}`}
+                    >
+                      {condition.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <Button className="w-full rounded-xl" size="lg">
+                  <Phone className="w-4 h-4 mr-2" />
+                  {nextPatient.phone}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl"
+                  size="lg"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Documents
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl"
+                  size="lg"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Chat
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DoctorDashboard;
