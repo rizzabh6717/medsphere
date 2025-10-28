@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, CreditCard, RefreshCw, X } from "lucide-react";
 import NavigationHeader from "@/components/NavigationHeader";
 import Footer from "@/components/Footer";
-import { getAppointments, type Appointment } from "@/lib/storage";
+import { getAppointments, clearAppointments, type Appointment } from "@/lib/storage";
 import RescheduleModal from "@/components/RescheduleModal";
+import { toast } from "sonner";
 
 const Appointments = () => {
   const navigate = useNavigate();
@@ -104,8 +105,20 @@ onClick={() => navigate(`/user/patient/feedback/${appointment.id}`)}
     <div className="min-h-screen bg-gradient-medical flex flex-col">
       <NavigationHeader />
       <div className="container mx-auto px-4 max-w-4xl py-8 flex-1 mb-auto">
-        <div className="bg-white rounded-lg px-6 py-3 mb-6">
+        <div className="bg-white rounded-lg px-6 py-3 mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold animate-fade-in">My Appointments</h1>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (confirm('Delete all appointments?')) {
+                clearAppointments();
+                setAllAppointments([]);
+                toast.success('All appointments deleted');
+              }
+            }}
+          >
+            Clear All
+          </Button>
         </div>
 
         <Tabs defaultValue="upcoming" className="w-full">

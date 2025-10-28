@@ -96,6 +96,11 @@ export const deleteAppointment = (id: string): void => {
   window.dispatchEvent(new CustomEvent('appointments:updated'));
 };
 
+export const clearAppointments = (): void => {
+  localStorage.setItem('appointments', JSON.stringify([]));
+  window.dispatchEvent(new CustomEvent('appointments:updated'));
+};
+
 // Family Members
 export const getFamilyMembers = (): FamilyMember[] => {
   try {
