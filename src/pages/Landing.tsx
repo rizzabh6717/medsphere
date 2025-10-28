@@ -319,8 +319,8 @@ onClick={() => navigate("/user")}
             Sign up for our mailing list to get the most out of modern healthcare.
           </p>
           <Button 
-            onClick={() => navigate("/login")}
-            size="lg" 
+onClick={() => navigate("/user")}
+            size="lg"
             className="rounded-full px-8"
           >
             Subscribe Now
