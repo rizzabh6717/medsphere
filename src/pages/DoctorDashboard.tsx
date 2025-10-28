@@ -423,6 +423,13 @@ const DoctorDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Simple White Footer Block */}
+        <div className="bg-white border-t border-gray-200 py-4 mt-8">
+          <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+            © {new Date().getFullYear()} MedSphere. All rights reserved.
+          </div>
+        </div>
       </div>
     </div>
   );
