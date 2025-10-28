@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -70,16 +71,59 @@ const DoctorDashboard = () => {
     { icon: Pill, label: "Medicines", value: "medicines" },
   ];
 
-  // Derived helpers
+  // Derived helpers (Schedule)
   const [scheduleQuery, setScheduleQuery] = useState("");
-  const [scheduleDate, setScheduleDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // simulate loading when view or date changes
+  useEffect(() => {
+    setIsLoading(true);
+    const t = setTimeout(() => setIsLoading(false), 300);
+    return () => clearTimeout(t);
+  }, [selectedDate, viewMode, scheduleQuery]);
+
+  // helpers
+  const formatTime = (h: number, m: number) => {
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hh = ((h + 11) % 12) + 1; // 0->12, 13->1
+    const mm = m.toString().padStart(2, "0");
+    return `${hh}:${mm} ${ampm}`;
+  };
+  const TIME_SLOTS = Array.from({ length: ((18 - 8) * 60) / 30 + 1 }, (_, i) => {
+    const minutes = 8 * 60 + i * 30;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return { h, m, label: formatTime(h, m) };
+  });
+
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+
+  const typeOfApt = (text: string | undefined): "checkup" | "consultation" | "followup" | "procedure" => {
+    const t = (text || "").toLowerCase();
+    if (t.includes("follow")) return "followup";
+    if (t.includes("check")) return "checkup";
+    if (t.includes("procedure") || t.includes("surgery")) return "procedure";
+    return "consultation";
+  };
+  const typeColor = (t: string) =>
+    ({
+      checkup: "bg-blue-100 text-blue-700",
+      consultation: "bg-green-100 text-green-700",
+      followup: "bg-orange-100 text-orange-700",
+      procedure: "bg-purple-100 text-purple-700",
+    } as any)[t] || "bg-secondary text-foreground";
+
+  // filtering
   const filteredAppointments = appointments.filter((a) => {
     const matchesName = scheduleQuery
       ? (a.patientName || "").toLowerCase().includes(scheduleQuery.toLowerCase())
       : true;
-    const matchesDate = scheduleDate ? new Date(a.date).toDateString() === new Date(scheduleDate).toDateString() : true;
-    return matchesName && matchesDate;
+    const matchesDate = sameDay(new Date(a.date), selectedDate);
+    return matchesName && (viewMode === "day" ? matchesDate : true);
   });
+
   const uniquePatients = Array.from(
     new Map(
       appointments.map((a) => [a.patientPhone, { name: a.patientName, phone: a.patientPhone, lastVisit: a.date }])
@@ -446,30 +490,91 @@ const DoctorDashboard = () => {
           {activeTab === "schedule" && (
             <div className="space-y-6">
               <div className="bg-card rounded-2xl shadow-card p-6">
-                <h2 className="text-xl font-bold mb-4">Schedule</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">Schedule</h2>
+                  <div className="flex gap-2">
+                    <Button variant={viewMode === 'day' ? 'default' : 'outline'} onClick={() => setViewMode('day')} className={viewMode==='day'? 'bg-[#5B68EE] hover:bg-[#4A56DD]':''}>Day</Button>
+                    <Button variant={viewMode === 'week' ? 'default' : 'outline'} onClick={() => setViewMode('week')} className={viewMode==='week'? 'bg-[#5B68EE] hover:bg-[#4A56DD]':''}>Week</Button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  <input className="input input-bordered p-2 rounded-md bg-secondary" placeholder="Search patient..." value={scheduleQuery} onChange={(e) => setScheduleQuery(e.target.value)} />
-                  <input className="input input-bordered p-2 rounded-md bg-secondary" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
-                  <div></div>
+                  <Input placeholder="Search patient..." value={scheduleQuery} onChange={(e) => setScheduleQuery(e.target.value)} />
+                  <Input type="date" value={selectedDate.toISOString().slice(0,10)} onChange={(e) => setSelectedDate(new Date(e.target.value))} />
+                  <div />
                 </div>
-                <div className="space-y-3">
-                  {filteredAppointments.map((a) => (
-                    <div key={a.id} className="p-4 bg-secondary rounded-xl flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold">{a.patientName}</div>
-                        <div className="text-sm text-muted-foreground">{new Date(a.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} • {a.time}</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button className="bg-green-500 hover:bg-green-600">Accept</Button>
-                        <Button variant="outline">Reject</Button>
-                        <Button variant="outline">Consulted</Button>
-                      </div>
+
+                {isLoading ? (
+                  <div className="text-center text-muted-foreground py-12">Loading schedule…</div>
+                ) : viewMode === 'day' ? (
+                  <div className="space-y-2">
+                    {TIME_SLOTS.map((slot, idx) => {
+                      const current = filteredAppointments.find(a => (a.time || '') === slot.label && sameDay(new Date(a.date), selectedDate));
+                      const nextSlot = TIME_SLOTS[Math.min(idx+1, TIME_SLOTS.length-1)];
+                      if (current) {
+                        const t = typeOfApt(current.symptoms);
+                        return (
+                          <div key={slot.label} className="p-3 bg-secondary rounded-xl flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold">{current.patientName}</div>
+                              <div className="text-sm text-muted-foreground">{slot.label} - {nextSlot.label} • 30 minutes</div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${typeColor(t)}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={slot.label} className="p-3 bg-card/50 rounded-xl text-sm text-muted-foreground">
+                          {slot.label} • No appointments scheduled
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // Week view
+                  <div className="overflow-auto">
+                    <div className="min-w-[900px]">
+                      {(() => {
+                        const start = new Date(selectedDate);
+                        const day = start.getDay();
+                        // Move to Sunday
+                        start.setDate(start.getDate() - day);
+                        const days = Array.from({ length: 7 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+                        return (
+                          <div>
+                            <div className="grid" style={{ gridTemplateColumns: `120px repeat(7, 1fr)`}}>
+                              <div />
+                              {days.map((d, i) => (
+                                <div key={i} className="p-2 text-center font-semibold">
+                                  {d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                </div>
+                              ))}
+                              {TIME_SLOTS.map((slot, r) => (
+                                <>
+                                  <div key={`time-${r}`} className="p-2 text-sm text-muted-foreground border-t">{slot.label}</div>
+                                  {days.map((d, c) => {
+                                    const item = appointments.find(a => (a.time||'') === slot.label && sameDay(new Date(a.date), d));
+                                    const key = `${r}-${c}`;
+                                    if (item) {
+                                      const t = typeOfApt(item.symptoms);
+                                      return (
+                                        <div key={key} className="border-t p-1">
+                                          <div className={`p-2 rounded-md text-xs ${typeColor(t)} whitespace-nowrap overflow-hidden text-ellipsis`}>
+                                            {item.patientName} • {t}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return <div key={key} className="border-t" />;
+                                  })}
+                                </>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
-                  ))}
-                  {filteredAppointments.length === 0 && (
-                    <div className="text-center text-muted-foreground py-8">No appointments</div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
