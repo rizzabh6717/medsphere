@@ -70,6 +70,22 @@ const DoctorDashboard = () => {
     { icon: Pill, label: "Medicines", value: "medicines" },
   ];
 
+  // Derived helpers
+  const [scheduleQuery, setScheduleQuery] = useState("");
+  const [scheduleDate, setScheduleDate] = useState<string>("");
+  const filteredAppointments = appointments.filter((a) => {
+    const matchesName = scheduleQuery
+      ? (a.patientName || "").toLowerCase().includes(scheduleQuery.toLowerCase())
+      : true;
+    const matchesDate = scheduleDate ? new Date(a.date).toDateString() === new Date(scheduleDate).toDateString() : true;
+    return matchesName && matchesDate;
+  });
+  const uniquePatients = Array.from(
+    new Map(
+      appointments.map((a) => [a.patientPhone, { name: a.patientName, phone: a.patientPhone, lastVisit: a.date }])
+    ).values()
+  );
+
   const handleLogout = () => {
     localStorage.removeItem("userRole");
     localStorage.removeItem("isAuthenticated");
@@ -207,32 +223,34 @@ const DoctorDashboard = () => {
         </header>
 
         <div className="p-8">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-card rounded-2xl shadow-card p-6 animate-scale-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex items-center gap-4">
+          {activeTab === "dashboard" && (
+            <>
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-4 gap-6 mb-8">
+                {stats.map((stat, index) => (
                   <div
-                    className={`w-14 h-14 ${stat.color} rounded-xl flex items-center justify-center`}
+                    key={index}
+                    className="bg-card rounded-2xl shadow-card p-6 animate-scale-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
                   >
-                    <stat.icon className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-14 h-14 ${stat.color} rounded-xl flex items-center justify-center`}
+                      >
+                        <stat.icon className="w-7 h-7 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">{stat.label}</p>
+                        <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold text-foreground">{stat.value}</p>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="grid grid-cols-3 gap-6">
-            {/* Today Appointments */}
-            <div className="col-span-2 space-y-6">
+              <div className="grid grid-cols-3 gap-6">
+                {/* Today Appointments */}
+                <div className="col-span-2 space-y-6">
               <div className="bg-card rounded-2xl shadow-card p-6">
                 <h2 className="text-xl font-bold text-foreground mb-4">
                   Today Appointment
@@ -422,6 +440,75 @@ const DoctorDashboard = () => {
               </div>
             </div>
           </div>
+            </>
+          )}
+
+          {activeTab === "schedule" && (
+            <div className="space-y-6">
+              <div className="bg-card rounded-2xl shadow-card p-6">
+                <h2 className="text-xl font-bold mb-4">Schedule</h2>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <input className="input input-bordered p-2 rounded-md bg-secondary" placeholder="Search patient..." value={scheduleQuery} onChange={(e) => setScheduleQuery(e.target.value)} />
+                  <input className="input input-bordered p-2 rounded-md bg-secondary" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
+                  <div></div>
+                </div>
+                <div className="space-y-3">
+                  {filteredAppointments.map((a) => (
+                    <div key={a.id} className="p-4 bg-secondary rounded-xl flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold">{a.patientName}</div>
+                        <div className="text-sm text-muted-foreground">{new Date(a.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} • {a.time}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button className="bg-green-500 hover:bg-green-600">Accept</Button>
+                        <Button variant="outline">Reject</Button>
+                        <Button variant="outline">Consulted</Button>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredAppointments.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">No appointments</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "patients" && (
+            <div className="space-y-4">
+              <div className="bg-card rounded-2xl shadow-card p-6">
+                <h2 className="text-xl font-bold mb-4">Patients</h2>
+                <div className="grid gap-3">
+                  {uniquePatients.map((p) => (
+                    <div key={p.phone} className="p-4 bg-secondary rounded-xl flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold">{p.name}</div>
+                        <div className="text-sm text-muted-foreground">{p.phone}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">Last visit: {new Date(p.lastVisit).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</div>
+                    </div>
+                  ))}
+                  {uniquePatients.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">No patients yet</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "messages" && (
+            <div className="bg-card rounded-2xl shadow-card p-6 text-muted-foreground">
+              <h2 className="text-xl font-bold mb-2 text-foreground">Messages</h2>
+              <p>Chat center placeholder. Integrate realtime later.</p>
+            </div>
+          )}
+
+          {activeTab === "medicines" && (
+            <div className="bg-card rounded-2xl shadow-card p-6 text-muted-foreground">
+              <h2 className="text-xl font-bold mb-2 text-foreground">Medicines</h2>
+              <p>Common medicines and dosage templates (placeholder).</p>
+            </div>
+          )}
         </div>
 
         {/* Simple White Footer Block */}
