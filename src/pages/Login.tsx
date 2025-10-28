@@ -11,6 +11,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [role, setRole] = useState<"patient" | "doctor">("patient");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +23,10 @@ const Login = () => {
     // Generate a random 6-digit OTP
     const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Store OTP temporarily in localStorage
+    // Store OTP and user role temporarily in localStorage
     localStorage.setItem('tempOTP', generatedOTP);
     localStorage.setItem('otpTimestamp', Date.now().toString());
+    localStorage.setItem('userRole', role);
     
     // Log OTP to console for demo purposes
     console.log('🔐 OTP Generated:', generatedOTP);
@@ -50,6 +52,34 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-center text-foreground mb-8">Login</h1>
 
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* Role Toggle */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Login as</Label>
+              <div className="flex gap-2 p-1 bg-secondary rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setRole("patient")}
+                  className={`flex-1 py-3 rounded-lg font-medium transition-all ${
+                    role === "patient"
+                      ? "bg-[#5B68EE] text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Patient
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("doctor")}
+                  className={`flex-1 py-3 rounded-lg font-medium transition-all ${
+                    role === "doctor"
+                      ? "bg-[#5B68EE] text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Doctor
+                </button>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">Mobile / Email</Label>
               <Input
@@ -82,7 +112,7 @@ const Login = () => {
               </button>
             </div>
 
-            <Button type="submit" className="w-full h-12 rounded-xl text-lg">
+            <Button type="submit" className="w-full h-12 rounded-xl text-lg bg-[#5B68EE] hover:bg-[#4A56DD]">
               Login
             </Button>
 

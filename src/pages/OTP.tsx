@@ -103,9 +103,18 @@ const OTP = () => {
       // Set authentication status
       setAuthenticated(true);
       
+      // Get user role from localStorage
+      const userRole = localStorage.getItem('userRole') || 'patient';
+      
       toast.success("✅ OTP verified successfully!");
       console.log('✅ OTP Verification: Success');
-      navigate("/dashboard");
+      
+      // Navigate based on role
+      if (userRole === 'doctor') {
+        navigate("/doctor/dashboard");
+      } else {
+        navigate("/patient/dashboard");
+      }
     } else {
       setAttempts(attempts + 1);
       console.log('❌ OTP Verification: Failed');
@@ -202,7 +211,7 @@ const OTP = () => {
 
           <Button
             onClick={handleVerify}
-            className="w-full h-12 rounded-xl text-lg"
+            className="w-full h-12 rounded-xl text-lg bg-[#5B68EE] hover:bg-[#4A56DD]"
             disabled={otp.length !== 6}
           >
             Verify
