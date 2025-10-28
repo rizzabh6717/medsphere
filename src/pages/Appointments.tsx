@@ -140,7 +140,7 @@ onClick={() => navigate(`/user/patient/feedback/${appointment.id}`)}
                 <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No Upcoming Appointments</h3>
                 <p className="text-muted-foreground mb-6">You don't have any upcoming appointments</p>
-<Button onClick={() => navigate('/user/patient/dashboard')} className="bg-[#5B68EE] hover:bg-[#4A56DD]">
+<Button onClick={() => navigate('/user/patient/dashboard')} className="bg-[#5B68EE] hover:bg-[#4A56DD]">Book an Appointment</Button>
               </Card>
             )}
           </TabsContent>
