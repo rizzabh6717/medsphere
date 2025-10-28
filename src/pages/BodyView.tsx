@@ -15,9 +15,9 @@ const BodyView = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical">
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
       <NavigationHeader />
-      <div className="container mx-auto px-4 max-w-7xl py-8">
+      <div className="container mx-auto px-4 max-w-7xl py-8 flex-1">
         {/* Controls */}
         <div className="flex flex-col gap-6 mb-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           {/* Search Bar */}
@@ -51,6 +51,13 @@ const BodyView = () => {
         <footer className="mt-8 text-center text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <p>Click on system tabs to filter body parts • Type to search • Press Enter or wait to see results • Drag to rotate the model</p>
         </footer>
+      </div>
+
+      {/* White Footer Block */}
+      <div className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} MedSphere. All rights reserved.
+        </div>
       </div>
     </div>
   );

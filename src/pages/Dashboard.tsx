@@ -148,7 +148,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-medical">
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
       <NavigationHeader />
       
       {/* Header */}
@@ -186,7 +186,7 @@ onClick={() => navigate("/user/patient/profile")}
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8 pb-28">
+      <div className="container mx-auto px-6 py-8 pb-28 flex-1">
         {/* Quick Actions */}
         <div className="grid grid-cols-4 gap-4 mb-8">
           {quickActions.map((action, index) => (

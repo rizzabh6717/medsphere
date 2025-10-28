@@ -241,8 +241,7 @@ const DoctorDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {/* Header */}
+      <div className="flex-1 overflow-auto flex flex-col">
         <header className="bg-card shadow-soft px-8 py-6 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -278,7 +277,7 @@ const DoctorDashboard = () => {
           </div>
         </header>
 
-        <div className="p-8">
+        <div className="p-8 flex-1">
           {activeTab === "dashboard" && (
             <>
               {/* Statistics Cards */}
@@ -637,7 +636,7 @@ const DoctorDashboard = () => {
         </div>
 
         {/* Simple White Footer Block */}
-        <div className="bg-white border-t border-gray-200 py-4 mt-8">
+        <div className="bg-white border-t border-gray-200 py-4 mt-auto">
           <div className="container mx-auto px-4 text-center text-sm text-gray-600">
             © {new Date().getFullYear()} MedSphere. All rights reserved.
           </div>

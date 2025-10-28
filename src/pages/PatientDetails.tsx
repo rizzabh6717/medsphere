@@ -51,8 +51,8 @@ const PatientDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="min-h-screen bg-gradient-medical py-8 flex flex-col">
+      <div className="container mx-auto px-4 max-w-4xl flex-1">
         <BackButton />
         <h1 className="text-3xl font-bold mb-6 animate-fade-in">Patient Details</h1>
 

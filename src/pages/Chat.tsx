@@ -122,7 +122,7 @@ const Chat = () => {
       </div>
 
       {/* Input */}
-      <Card className="rounded-none border-x-0 border-b-0 p-4">
+      <Card className="rounded-none border-x-0 border-b-0 p-4 mt-auto">
         <div className="container mx-auto flex items-center gap-3">
           <Input
             value={message}
