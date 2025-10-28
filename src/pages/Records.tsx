@@ -106,11 +106,11 @@ const Records = () => {
         </div>
 
         <div className="flex gap-3 mt-6 pt-4 border-t">
-          <Button variant="outline" className="flex-1">
+          <Button variant="outline" className="flex-1 hover:bg-[#5B68EE] hover:text-white">
             <Download className="w-4 h-4 mr-2" />
             Download PDF
           </Button>
-          <Button variant="outline" className="flex-1">
+          <Button variant="outline" className="flex-1 hover:bg-[#5B68EE] hover:text-white">
             <FileText className="w-4 h-4 mr-2" />
             Print
           </Button>
@@ -120,10 +120,10 @@ const Records = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical">
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
       <NavigationHeader />
-      <div className="container mx-auto px-4 max-w-4xl py-8">
-        <div className="mb-6 animate-fade-in">
+      <div className="container mx-auto px-4 max-w-4xl py-8 flex-1 mb-auto">
+        <div className="bg-white rounded-lg px-6 py-4 mb-6 animate-fade-in">
           <h1 className="text-3xl font-bold mb-2">Medical Records</h1>
           <p className="text-muted-foreground">
             View your prescriptions and medical history
@@ -131,9 +131,19 @@ const Records = () => {
         </div>
 
         <Tabs defaultValue="prescriptions" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
-            <TabsTrigger value="reports">Lab Reports</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-white">
+            <TabsTrigger 
+              value="prescriptions"
+              className="data-[state=active]:bg-[#5B68EE] data-[state=active]:text-white"
+            >
+              Prescriptions
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reports"
+              className="data-[state=active]:bg-[#5B68EE] data-[state=active]:text-white"
+            >
+              Lab Reports
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="prescriptions">
@@ -148,7 +158,7 @@ const Records = () => {
                 <p className="text-muted-foreground mb-6">
                   Your medical records and prescriptions will appear here after completed appointments
                 </p>
-                <Button onClick={() => window.location.href = '/dashboard'}>
+                <Button onClick={() => window.location.href = '/patient/dashboard'} className="bg-[#5B68EE] hover:bg-[#4A56DD]">
                   Book an Appointment
                 </Button>
               </Card>
@@ -165,6 +175,13 @@ const Records = () => {
             </Card>
           </TabsContent>
         </Tabs>
+      </div>
+      
+      {/* Simple White Footer Block */}
+      <div className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} MedSphere. All rights reserved.
+        </div>
       </div>
     </div>
   );

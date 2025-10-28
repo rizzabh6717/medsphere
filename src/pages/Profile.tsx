@@ -76,10 +76,10 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical pb-20">
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
       <NavigationHeader />
       
-      <div className="container mx-auto px-4 max-w-4xl py-8">
+      <div className="container mx-auto px-4 max-w-4xl py-8 flex-1 mb-auto">
         {/* Profile Header */}
         <Card className="p-6 mb-6 animate-fade-in">
           <div className="flex items-start justify-between mb-6">
@@ -389,6 +389,13 @@ const Profile = () => {
             Logout
           </Button>
         </Card>
+      </div>
+      
+      {/* Simple White Footer Block */}
+      <div className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} MedSphere. All rights reserved.
+        </div>
       </div>
     </div>
   );
