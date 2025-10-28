@@ -22,7 +22,6 @@ import {
   X,
   Menu,
   ChevronLeft,
-  Bone,
 } from "lucide-react";
 
 const DoctorDashboard = () => {
@@ -72,7 +71,6 @@ const DoctorDashboard = () => {
     { icon: Users, label: "Patients", value: "patients" },
     { icon: MessageSquare, label: "Messages", value: "messages" },
     { icon: Pill, label: "Medicines", value: "medicines" },
-    { icon: Bone, label: "Body View", value: "body-view" },
   ];
 
   // Derived helpers (Schedule)
@@ -207,13 +205,7 @@ const DoctorDashboard = () => {
           {menuItems.map((item) => (
             <button
               key={item.value}
-              onClick={() => {
-                if (item.value === 'body-view') {
-                  navigate('/user/doctor/body-view');
-                } else {
-                  setActiveTab(item.value);
-                }
-              }}
+              onClick={() => setActiveTab(item.value)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 activeTab === item.value
                   ? "bg-primary text-primary-foreground shadow-sm"
