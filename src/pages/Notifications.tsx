@@ -27,12 +27,14 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical">
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
       <NavigationHeader />
-      <div className="container mx-auto px-4 max-w-3xl py-8">
-        <div className="flex items-center justify-between mb-6 animate-fade-in">
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <Badge variant="secondary">{notifications.filter(n => !n.read).length} New</Badge>
+      <div className="container mx-auto px-4 max-w-3xl py-8 flex-1">
+        <div className="bg-white rounded-lg px-6 py-3 mb-6 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Notifications</h1>
+            <Badge variant="secondary" className="bg-[#5B68EE] text-white">{notifications.filter(n => !n.read).length} New</Badge>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -78,6 +80,13 @@ const Notifications = () => {
               <p className="text-muted-foreground">You don't have any notifications yet</p>
             </Card>
           )}
+        </div>
+      </div>
+      
+      {/* Simple White Footer Block */}
+      <div className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} MedSphere. All rights reserved.
         </div>
       </div>
     </div>

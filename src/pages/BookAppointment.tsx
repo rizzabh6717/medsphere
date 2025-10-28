@@ -6,9 +6,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, User, Calendar as CalendarIcon } from "lucide-react";
+import { Clock, User, Calendar as CalendarIcon, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import BackButton from "@/components/BackButton";
+import NavigationHeader from "@/components/NavigationHeader";
 import { saveAppointment, addNotification } from "@/lib/storage";
 
 const BookAppointment = () => {
@@ -79,14 +79,22 @@ const BookAppointment = () => {
     
     // Navigate to appointments page after a short delay
     setTimeout(() => {
-      navigate("/appointments");
+      navigate("/patient/appointments");
     }, 1500);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical py-8">
-      <div className="container mx-auto px-4 max-w-5xl">
-        <BackButton />
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
+      <NavigationHeader />
+      <div className="container mx-auto px-4 max-w-5xl py-8 flex-1 mb-auto">
+        <Button
+          variant="default"
+          onClick={() => navigate(-1)}
+          className="mb-6 bg-[#5B68EE] hover:bg-[#4A56DD]"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
         <h1 className="text-3xl font-bold mb-2 animate-fade-in">Book Appointment</h1>
         {doctorName && (
           <p className="text-muted-foreground mb-6">
@@ -128,7 +136,7 @@ const BookAppointment = () => {
                         key={slot}
                         variant={selectedSlot === slot ? "default" : "outline"}
                         onClick={() => handleSlotSelect(slot)}
-                        className="text-sm"
+                        className={`text-sm ${selectedSlot === slot ? 'bg-[#5B68EE] hover:bg-[#4A56DD]' : ''}`}
                         size="sm"
                       >
                         {slot}
@@ -145,7 +153,7 @@ const BookAppointment = () => {
                         key={slot}
                         variant={selectedSlot === slot ? "default" : "outline"}
                         onClick={() => handleSlotSelect(slot)}
-                        className="text-sm"
+                        className={`text-sm ${selectedSlot === slot ? 'bg-[#5B68EE] hover:bg-[#4A56DD]' : ''}`}
                         size="sm"
                       >
                         {slot}
@@ -240,12 +248,19 @@ const BookAppointment = () => {
                   </div>
                 )}
 
-                <Button onClick={handleBooking} className="w-full" size="lg">
+                <Button onClick={handleBooking} className="w-full bg-[#5B68EE] hover:bg-[#4A56DD]" size="lg">
                   Book Appointment
                 </Button>
               </div>
             </Card>
           </div>
+        </div>
+      </div>
+      
+      {/* Simple White Footer Block */}
+      <div className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} MedSphere. All rights reserved.
         </div>
       </div>
     </div>

@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, CreditCard, Eye, RefreshCw, X } from "lucide-react";
+import { Calendar, Clock, CreditCard, RefreshCw, X } from "lucide-react";
 import NavigationHeader from "@/components/NavigationHeader";
+import Footer from "@/components/Footer";
 import { getAppointments, type Appointment } from "@/lib/storage";
 
 const Appointments = () => {
@@ -65,15 +66,15 @@ const Appointments = () => {
           {status === "upcoming" && (
             <>
               {!appointment.paid && (
-                <Button size="sm" variant="outline">
+                <Button size="sm" className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white">
                   <CreditCard className="w-4 h-4 mr-1" />
                   Pay
                 </Button>
               )}
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => navigate(`/reschedule/${appointment.id}`, { state: { appointment } })}
+                className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white"
+                onClick={() => navigate(`/patient/reschedule/${appointment.id}`, { state: { appointment } })}
               >
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Reschedule
@@ -83,18 +84,12 @@ const Appointments = () => {
           {status === "completed" && (
             <Button
               size="sm"
-              onClick={() => navigate(`/feedback/${appointment.id}`)}
+              onClick={() => navigate(`/patient/feedback/${appointment.id}`)}
+              className="bg-[#5B68EE] hover:bg-[#4A56DD]"
             >
               Give Feedback
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate(`/appointment/${appointment.id}`)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
         </div>
       </div>
 
@@ -103,16 +98,33 @@ const Appointments = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical">
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
       <NavigationHeader />
-      <div className="container mx-auto px-4 max-w-4xl py-8">
-        <h1 className="text-3xl font-bold mb-6 animate-fade-in">My Appointments</h1>
+      <div className="container mx-auto px-4 max-w-4xl py-8 flex-1 mb-auto">
+        <div className="bg-white rounded-lg px-6 py-3 mb-6">
+          <h1 className="text-3xl font-bold animate-fade-in">My Appointments</h1>
+        </div>
 
         <Tabs defaultValue="upcoming" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-white">
+            <TabsTrigger 
+              value="upcoming" 
+              className="data-[state=active]:bg-[#5B68EE] data-[state=active]:text-white"
+            >
+              Upcoming
+            </TabsTrigger>
+            <TabsTrigger 
+              value="completed"
+              className="data-[state=active]:bg-[#5B68EE] data-[state=active]:text-white"
+            >
+              Completed
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cancelled"
+              className="data-[state=active]:bg-[#5B68EE] data-[state=active]:text-white"
+            >
+              Cancelled
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="upcoming">
@@ -125,7 +137,7 @@ const Appointments = () => {
                 <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No Upcoming Appointments</h3>
                 <p className="text-muted-foreground mb-6">You don't have any upcoming appointments</p>
-                <Button onClick={() => navigate('/dashboard')}>Book an Appointment</Button>
+                <Button onClick={() => navigate('/patient/dashboard')} className="bg-[#5B68EE] hover:bg-[#4A56DD]">Book an Appointment</Button>
               </Card>
             )}
           </TabsContent>
@@ -154,6 +166,13 @@ const Appointments = () => {
             )}
           </TabsContent>
         </Tabs>
+      </div>
+      
+      {/* Simple White Footer Block */}
+      <div className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} MedSphere. All rights reserved.
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Briefcase, Users, Award, Clock } from "lucide-react";
-import BackButton from "@/components/BackButton";
+import NavigationHeader from "@/components/NavigationHeader";
 
 const DoctorDetails = () => {
   const { id } = useParams();
@@ -27,9 +27,16 @@ const DoctorDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-medical">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <BackButton to="/dashboard" label="Back to Dashboard" />
+    <div className="min-h-screen bg-gradient-medical flex flex-col">
+      <NavigationHeader />
+      <div className="container mx-auto px-4 py-8 max-w-4xl flex-1 mb-auto">
+        <Button
+          variant="default"
+          onClick={() => navigate("/patient/dashboard")}
+          className="mb-6 bg-[#5B68EE] hover:bg-[#4A56DD]"
+        >
+          Back to Dashboard
+        </Button>
         <Card className="p-6 animate-fade-in">
           <div className="flex flex-col md:flex-row gap-6">
             <div className="w-32 h-32 rounded-full bg-gradient-medical flex items-center justify-center text-white text-3xl font-bold">
@@ -96,8 +103,8 @@ const DoctorDetails = () => {
               </div>
               <Button 
                 size="lg"
-                onClick={() => navigate('/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
-                className="px-8"
+                onClick={() => navigate('/patient/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
+                className="px-8 bg-[#5B68EE] hover:bg-[#4A56DD]"
               >
                 <Clock className="w-4 h-4 mr-2" />
                 Book Appointment
@@ -105,6 +112,13 @@ const DoctorDetails = () => {
             </div>
           </div>
         </Card>
+      </div>
+      
+      {/* Simple White Footer Block */}
+      <div className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} MedSphere. All rights reserved.
+        </div>
       </div>
     </div>
   );
