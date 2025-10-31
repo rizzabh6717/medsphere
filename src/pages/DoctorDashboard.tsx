@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { addPrescription, ensureChatThread, updateAppointment, getAppointments, clearAllMedicalData } from "@/lib/storage";
 import { toast } from "sonner";
-import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2 } from "lucide-react";
+import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2 } from "lucide-react";import DoctorWeekCalendar from "@/components/DoctorWeekCalendar";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -633,50 +633,8 @@ const DoctorDashboard = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="overflow-auto">
-                    <div className="min-w-[980px]">
-                      {(() => {
-                        const start = new Date(selectedDate);
-                        const day = start.getDay();
-                        start.setDate(start.getDate() - day);
-                        const days = Array.from({ length: 7 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
-                        const isToday = (d: Date) => d.toDateString() === new Date().toDateString();
-                        return (
-                          <div className="border rounded-xl overflow-hidden">
-                            <div className="grid" style={{ gridTemplateColumns: `120px repeat(7, 1fr)`}}>
-                              <div className="sticky top-0 bg-card z-10 border-b p-2" />
-                              {days.map((d, i) => (
-                                <div key={i} className={`p-2 text-center font-semibold sticky top-0 z-10 border-b bg-card ${i > 0 ? 'border-l' : ''} ${isToday(d) ? 'text-primary' : ''}`}>
-                                  {d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                </div>
-                              ))}
-                              {TIME_SLOTS.map((slot, r) => (
-                                <>
-                                  <div key={`time-${r}`} className="p-2 text-sm text-muted-foreground border-t border-r sticky left-0 bg-card z-10">{slot.label}</div>
-                                  {days.map((d, c) => {
-                                    const item = appointments.find(a => (!doctorProfile || a.doctorId === doctorProfile.id) && (a.time||'') === slot.label && sameDay(a.date, d) && a.status !== 'cancelled' && (a.accepted || a.status === 'completed'));
-                                    const key = `${r}-${c}`;
-                                    const cellCls = `border-t ${c > 0 ? 'border-l' : ''} min-h-[56px] p-1 ${isToday(d) ? 'bg-accent/30' : ''}`;
-                                    if (item) {
-                                      const s = item.status as 'upcoming'|'completed'|'cancelled';
-                                      return (
-                                        <div key={key} className={cellCls}>
-                                          <div className="p-2 rounded-md text-xs bg-secondary whitespace-nowrap overflow-hidden text-ellipsis flex items-center justify-between">
-                                            <span className="font-semibold mr-2 truncate">{item.patientName}</span>
-                                            <span className={`px-2 py-0.5 rounded-full ${statusColor(s)}`}>{statusText(s)}</span>
-                                          </div>
-                                        </div>
-                                      );
-                                    }
-                                    return <div key={key} className={cellCls} />;
-                                  })}
-                                </>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                  <div className="overflow-hidden">
+                    <DoctorWeekCalendar doctorId={doctorProfile?.id || null} />
                   </div>
                 )}
               </div>
