@@ -4,7 +4,7 @@ const AUTH_KEY = 'isAuthenticated';
 
 export const isAuthenticated = (): boolean => {
   try {
-    const authStatus = localStorage.getItem(AUTH_KEY);
+    const authStatus = sessionStorage.getItem(AUTH_KEY);
     return authStatus === 'true';
   } catch (error) {
     console.error('Error checking authentication:', error);
@@ -14,7 +14,7 @@ export const isAuthenticated = (): boolean => {
 
 export const setAuthenticated = (status: boolean): void => {
   try {
-    localStorage.setItem(AUTH_KEY, status.toString());
+    sessionStorage.setItem(AUTH_KEY, status.toString());
   } catch (error) {
     console.error('Error setting authentication:', error);
   }
@@ -22,9 +22,7 @@ export const setAuthenticated = (status: boolean): void => {
 
 export const logout = (): void => {
   try {
-    localStorage.removeItem(AUTH_KEY);
-    // Optionally clear other user data
-    // localStorage.clear();
+    sessionStorage.removeItem(AUTH_KEY);
   } catch (error) {
     console.error('Error during logout:', error);
   }

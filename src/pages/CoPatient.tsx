@@ -63,7 +63,7 @@ const CoPatient = () => {
   const confirmJoin = () => {
     setShowJoinDialog(false);
     // Navigate to book appointment with pre-filled data
-    navigate("/user/patient/book-appointment", {
+navigate("/patient/book-appointment", {
       state: {
         doctorId: selectedGroup.id,
         groupBooking: true,

@@ -28,13 +28,16 @@ const Signup = () => {
       return;
     }
 
-    // Generate a random 6-digit OTP
-    const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate a random 4-digit OTP
+    const generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
     
     // Store OTP temporarily in localStorage
-    localStorage.setItem('tempOTP', generatedOTP);
-    localStorage.setItem('otpTimestamp', Date.now().toString());
+    sessionStorage.setItem('tempOTP', generatedOTP);
+    sessionStorage.setItem('otpTimestamp', Date.now().toString());
     
+    // Set default role for signup as patient
+    sessionStorage.setItem('userRole', 'patient');
+
     // Log OTP to console for demo purposes
     console.log('🔐 OTP Generated:', generatedOTP);
     console.log('📱 Simulated SMS: Your verification code is:', generatedOTP);

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Briefcase, Users, Award, Clock } from "lucide-react";
 import NavigationHeader from "@/components/NavigationHeader";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const DoctorDetails = () => {
   const { id } = useParams();
@@ -32,15 +33,21 @@ const DoctorDetails = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl flex-1 mb-auto">
         <Button
           variant="default"
-onClick={() => navigate("/user/patient/dashboard")}
+onClick={() => navigate("/patient/dashboard")}
           className="mb-6 bg-[#5B68EE] hover:bg-[#4A56DD]"
         >
           Back to Dashboard
         </Button>
         <Card className="p-6 animate-fade-in">
           <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-32 h-32 rounded-full bg-gradient-medical flex items-center justify-center text-white text-3xl font-bold">
-              {doctor.name.split(' ').map(n => n[0]).join('')}
+            <div className="w-32 h-32 rounded-full bg-gradient-medical flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
+              <Avatar className="w-32 h-32">
+                <AvatarImage
+                  src={(/\b(sarah|priya|anjali|kavita|neha)\b/i.test(doctor.name) ? "/assets/female%20doc.png" : "/assets/male%20doctor.png")}
+                  alt={doctor.name}
+                />
+                <AvatarFallback>{doctor.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              </Avatar>
             </div>
             
             <div className="flex-1">
@@ -103,7 +110,7 @@ onClick={() => navigate("/user/patient/dashboard")}
               </div>
               <Button 
                 size="lg"
-onClick={() => navigate('/user/patient/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
+onClick={() => navigate('/patient/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
                 className="px-8 bg-[#5B68EE] hover:bg-[#4A56DD]"
               >
                 <Clock className="w-4 h-4 mr-2" />

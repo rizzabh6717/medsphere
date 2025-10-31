@@ -1,29 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { updateAppointment } from "@/lib/storage";
-import {
-  Bell,
-  HelpCircle,
-  Settings,
-  LayoutDashboard,
-  Calendar,
-  Users,
-  MessageSquare,
-  Pill,
-  LogOut,
-  User,
-  FileText,
-  Heart,
-  Phone,
-  MessageCircle,
-  Check,
-  X,
-  Menu,
-  ChevronLeft,
-  Scan,
-} from "lucide-react";
+import { addPrescription, ensureChatThread, updateAppointment, getAppointments, clearAllMedicalData } from "@/lib/storage";
+import { toast } from "sonner";
+import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2 } from "lucide-react";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -40,31 +26,60 @@ const DoctorDashboard = () => {
     { label: "Treatments", value: 0, icon: Heart, color: "bg-red-500" },
   ]);
 
-  // Removed mock data; compute from storage
+  // Patients tab state
+  const [query, setQuery] = useState("");
+  const [filterDate, setFilterDate] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'completed' | 'cancelled'>('all');
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [rxOpenFor, setRxOpenFor] = useState<{ patientPhone: string; aptId?: string } | null>(null);
+  const [rxForm, setRxForm] = useState({ medicine: "", dosage: "", duration: "", notes: "" });
 
-  const nextPatient = appointments.length > 0 ? {
-    name: appointments[0].patientName,
-    address: "",
-    dob: appointments[0].patientDob || "",
-    sex: "",
-    weight: "",
-    height: "",
-    lastAppointment: "",
-    registerDate: "",
-    phone: appointments[0].patientPhone || "",
-    conditions: [],
-  } : {
-    name: "",
-    address: "",
-    dob: "",
-    sex: "",
-    weight: "",
-    height: "",
-    lastAppointment: "",
-    registerDate: "",
-    phone: "",
-    conditions: [],
+  // Next patient (today + accepted + upcoming by time)
+  const timeToMinutes = (t: string) => {
+    const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(t || '');
+    if (!m) return 24*60;
+    let h = parseInt(m[1],10);
+    const min = parseInt(m[2],10);
+    const ampm = m[3].toUpperCase();
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return h*60 + min;
   };
+  const sortedToday = [...todayAppointments].sort((a,b)=> timeToMinutes(a.time) - timeToMinutes(b.time));
+  // Robust: build full local Date for each appointment today and pick the nearest future one
+  const parseTime = (t: string) => {
+    const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(t || '');
+    if (!m) return { h: 23, m: 59 };
+    let h = parseInt(m[1],10);
+    const min = parseInt(m[2],10);
+    const ampm = m[3].toUpperCase();
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return { h, m: min };
+  };
+  const now = new Date();
+  const futureToday = sortedToday
+    .map(a => {
+      const d = new Date(a.date);
+      const { h, m } = parseTime(a.time);
+      const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0);
+      return { a, ts: dt.getTime() };
+    })
+    .filter(x => x.ts >= now.getTime())
+    .sort((x,y) => x.ts - y.ts);
+  const nextApt = futureToday.length ? futureToday[0].a : null;
+  const nextPatient = nextApt ? {
+    name: nextApt.patientName,
+    address: "",
+    dob: nextApt.patientDob || "",
+    sex: nextApt.patientGender || "",
+    weight: nextApt.patientWeightKg ? `${nextApt.patientWeightKg} kg` : "",
+    height: nextApt.patientHeightCm ? `${nextApt.patientHeightCm} cm` : "",
+    lastAppointment: "",
+    registerDate: nextApt.registerDate ? new Date(nextApt.registerDate).toLocaleDateString() : "",
+    phone: nextApt.patientPhone || "",
+    conditions: (nextApt.medicalConditions || []).map(c => ({ name: c, color: 'bg-secondary' })),
+  } : null;
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", value: "dashboard" },
@@ -93,7 +108,7 @@ const DoctorDashboard = () => {
     const ampm = h >= 12 ? "PM" : "AM";
     const hh = ((h + 11) % 12) + 1; // 0->12, 13->1
     const mm = m.toString().padStart(2, "0");
-    return `${hh}:${mm} ${ampm}`;
+    return `${String(hh).padStart(2, '0')}:${mm} ${ampm}`;
   };
   const TIME_SLOTS = Array.from({ length: ((18 - 8) * 60) / 30 + 1 }, (_, i) => {
     const minutes = 8 * 60 + i * 30;
@@ -102,7 +117,15 @@ const DoctorDashboard = () => {
     return { h, m, label: formatTime(h, m) };
   });
 
-  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  // Compare dates properly handling UTC stored dates
+  const sameDay = (dateStr: string, compareDate: Date) => {
+    // Parse the appointment date (stored as ISO UTC string) and get local date
+    const aptDateObj = new Date(dateStr);
+    const aptLocal = `${aptDateObj.getFullYear()}-${String(aptDateObj.getMonth()+1).padStart(2,'0')}-${String(aptDateObj.getDate()).padStart(2,'0')}`;
+    // Get local date from compareDate
+    const cmpLocal = `${compareDate.getFullYear()}-${String(compareDate.getMonth()+1).padStart(2,'0')}-${String(compareDate.getDate()).padStart(2,'0')}`;
+    return aptLocal === cmpLocal;
+  };
 
   const typeOfApt = (text: string | undefined): "checkup" | "consultation" | "followup" | "procedure" => {
     const t = (text || "").toLowerCase();
@@ -119,12 +142,19 @@ const DoctorDashboard = () => {
       procedure: "bg-purple-100 text-purple-700",
     } as any)[t] || "bg-secondary text-foreground";
 
+  const statusColor = (s: 'upcoming'|'completed'|'cancelled') => (
+    s === 'upcoming' ? 'bg-blue-100 text-blue-700' : s === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+  );
+  const statusText = (s: 'upcoming'|'completed'|'cancelled') => (
+    s === 'completed' ? 'Consulted' : s === 'upcoming' ? 'Consultation' : 'Cancelled'
+  );
+
   // filtering
   const filteredAppointments = acceptedAppointments.filter((a) => {
     const matchesName = scheduleQuery
       ? (a.patientName || "").toLowerCase().includes(scheduleQuery.toLowerCase())
       : true;
-    const matchesDate = sameDay(new Date(a.date), selectedDate);
+    const matchesDate = sameDay(a.date, selectedDate);
     return matchesName && (viewMode === "day" ? matchesDate : true);
   });
 
@@ -137,29 +167,36 @@ const DoctorDashboard = () => {
   );
 
   const handleLogout = () => {
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("isAuthenticated");
-    navigate("/user");
+    try {
+      sessionStorage.removeItem("userRole");
+      sessionStorage.removeItem("isAuthenticated");
+      sessionStorage.removeItem("doctorProfile");
+    } catch {}
+    navigate("/login");
   };
 
   useEffect(() => {
     const load = () => {
-      const raw = localStorage.getItem('doctorProfile');
+      const raw = sessionStorage.getItem('doctorProfile') || localStorage.getItem('doctorProfile');
       let profile = raw ? JSON.parse(raw) : null;
-      const allApts = JSON.parse(localStorage.getItem('appointments') || '[]');
+      const allApts = getAppointments();
       if (!profile) {
         if (allApts.length > 0) {
           profile = { id: allApts[0].doctorId, name: allApts[0].doctorName, specialty: allApts[0].doctorSpecialty };
-          localStorage.setItem('doctorProfile', JSON.stringify(profile));
+          sessionStorage.setItem('doctorProfile', JSON.stringify(profile));
         } else {
           profile = { id: 'unknown', name: 'Doctor', specialty: '' };
         }
       }
+      // If profile exists but is unknown and we now have appointments, fix it
+      if (profile.id === 'unknown' && allApts.length > 0) {
+        profile = { id: allApts[0].doctorId, name: allApts[0].doctorName, specialty: allApts[0].doctorSpecialty };
+        sessionStorage.setItem('doctorProfile', JSON.stringify(profile));
+      }
       setDoctorProfile(profile);
       const filtered = profile.id === 'unknown' ? [] : allApts.filter((a: any) => a.doctorId === profile.id);
       setAppointments(filtered);
-      const today = new Date().toDateString();
-      const todays = filtered.filter((a: any) => new Date(a.date).toDateString() === today && a.status === 'upcoming' && a.accepted);
+      const todays = filtered.filter((a: any) => sameDay(a.date, new Date()) && a.status === 'upcoming' && a.accepted);
       setTodayAppointments(todays);
       const totalPatients = new Set(filtered.map(a => a.patientPhone)).size;
       const totalAppointments = filtered.length;
@@ -209,7 +246,9 @@ const DoctorDashboard = () => {
               key={item.value}
               onClick={() => {
                 if (item.value === 'bodyview') {
-                  navigate('/user/doctor/body-view');
+                  navigate('/doctor/body-view');
+                } else if (item.value === 'messages') {
+                  navigate('/doctor/messages');
                 } else {
                   setActiveTab(item.value);
                 }
@@ -407,100 +446,107 @@ const DoctorDashboard = () => {
               <h2 className="text-xl font-bold text-foreground mb-4">
                 Next Patient Details
               </h2>
-              
-              {/* Patient Photo */}
-              <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 rounded-full bg-gradient-card flex items-center justify-center">
-                  <User className="w-12 h-12 text-primary" />
-                </div>
-              </div>
 
-              {/* Patient Name */}
-              <h3 className="text-xl font-bold text-center text-foreground mb-2">
-                {nextPatient.name}
-              </h3>
-              <p className="text-sm text-center text-muted-foreground mb-6">
-                {nextPatient.address}
-              </p>
+              {!nextPatient ? (
+                <div className="text-center text-muted-foreground py-12">No next patient today</div>
+              ) : (
+                <>
+                  {/* Patient Photo */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-24 h-24 rounded-full bg-gradient-card flex items-center justify-center">
+                      <User className="w-12 h-12 text-primary" />
+                    </div>
+                  </div>
 
-              {/* Patient Information Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <p className="text-xs text-muted-foreground">D.O.B</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {nextPatient.dob}
+                  {/* Patient Name */}
+                  <h3 className="text-xl font-bold text-center text-foreground mb-2">
+                    {nextPatient.name}
+                  </h3>
+                  <p className="text-sm text-center text-muted-foreground mb-6">
+                    {nextPatient.address}
                   </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Sex</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {nextPatient.sex}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Weight</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {nextPatient.weight}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Height</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {nextPatient.height}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Last Appointment</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {nextPatient.lastAppointment}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Register Date</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {nextPatient.registerDate}
-                  </p>
-                </div>
-              </div>
 
-              {/* Medical Conditions */}
-              <div className="mb-6">
-                <p className="text-xs text-muted-foreground mb-2">Medical Conditions</p>
-                <div className="flex flex-wrap gap-2">
-                  {nextPatient.conditions.map((condition, index) => (
-                    <span
-                      key={index}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${condition.color}`}
+                  {/* Patient Information Grid */}
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <p className="text-xs text-muted-foreground">D.O.B</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {nextPatient.dob}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Sex</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {nextPatient.sex}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Weight</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {nextPatient.weight}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Height</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {nextPatient.height}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Last Appointment</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {nextPatient.lastAppointment}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Register Date</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {nextPatient.registerDate}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Medical Conditions */}
+                  <div className="mb-6">
+                    <p className="text-xs text-muted-foreground mb-2">Medical Conditions</p>
+                    <div className="flex flex-wrap gap-2">
+                      {nextPatient.conditions.map((condition, index) => (
+                        <span
+                          key={index}
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${condition.color}`}
+                        >
+                          {condition.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    <Button className="w-full rounded-xl" size="lg">
+                      <Phone className="w-4 h-4 mr-2" />
+                      {nextPatient.phone}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl"
+                      size="lg"
                     >
-                      {condition.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <Button className="w-full rounded-xl" size="lg">
-                  <Phone className="w-4 h-4 mr-2" />
-                  {nextPatient.phone}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-xl"
-                  size="lg"
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Documents
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-xl"
-                  size="lg"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Chat
-                </Button>
-              </div>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Documents
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl"
+                      size="lg"
+                      onClick={()=> navigate('/doctor/messages')}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Chat
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
             </>
@@ -509,35 +555,73 @@ const DoctorDashboard = () => {
           {activeTab === "schedule" && (
             <div className="space-y-6">
               <div className="bg-card rounded-2xl shadow-card p-6">
+                {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold">Schedule</h2>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => { clearAllMedicalData(); toast.success('Cleared appointments, chats, and records'); }}>Clear Data</Button>
+                    <Button variant="outline" onClick={() => setSelectedDate(new Date())}>Today</Button>
+                    <Button variant="outline" size="icon" onClick={() => setSelectedDate(new Date(new Date(selectedDate).setDate(selectedDate.getDate()-1)))}><ChevronLeft className="w-4 h-4"/></Button>
+                    <Button variant="outline" size="icon" onClick={() => setSelectedDate(new Date(new Date(selectedDate).setDate(selectedDate.getDate()+1)))}><ChevronRight className="w-4 h-4"/></Button>
                     <Button variant={viewMode === 'day' ? 'default' : 'outline'} onClick={() => setViewMode('day')} className={viewMode==='day'? 'bg-[#5B68EE] hover:bg-[#4A56DD]':''}>Day</Button>
                     <Button variant={viewMode === 'week' ? 'default' : 'outline'} onClick={() => setViewMode('week')} className={viewMode==='week'? 'bg-[#5B68EE] hover:bg-[#4A56DD]':''}>Week</Button>
                   </div>
                 </div>
+                {/* Filters */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <Input placeholder="Search patient..." value={scheduleQuery} onChange={(e) => setScheduleQuery(e.target.value)} />
-                  <Input type="date" value={selectedDate.toISOString().slice(0,10)} onChange={(e) => setSelectedDate(new Date(e.target.value))} />
-                  <div />
+                  <Input type="date" value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth()+1).padStart(2,'0')}-${String(selectedDate.getDate()).padStart(2,'0')}`} onChange={(e) => {
+                    // Parse date as local date to avoid timezone shift
+                    const [y, m, d] = e.target.value.split('-').map(Number);
+                    setSelectedDate(new Date(y, m - 1, d, 12, 0, 0));
+                  }} />
+                  <div className="text-xs text-muted-foreground flex items-center gap-3">
+                    <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700">Consultation</span>
+                    <span className="px-2 py-0.5 rounded bg-green-100 text-green-700">Consulted</span>
+                    <span className="px-2 py-0.5 rounded bg-red-100 text-red-700">Cancelled</span>
+                  </div>
                 </div>
 
                 {isLoading ? (
                   <div className="text-center text-muted-foreground py-12">Loading schedule…</div>
+                ) : scheduleQuery.trim() ? (
+                  <div className="space-y-2">
+                    {appointments
+                      .filter(a => (!doctorProfile || a.doctorId === doctorProfile.id))
+                      .filter(a => a.status !== 'cancelled' && (a.accepted || a.status === 'completed'))
+                      .filter(a => (a.patientName || '').toLowerCase().includes(scheduleQuery.toLowerCase()))
+                      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                      .map((a) => {
+                        const s = a.status as 'upcoming' | 'completed' | 'cancelled';
+                        return (
+                          <div key={a.id} className="p-3 bg-secondary rounded-xl flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold">{a.patientName}</div>
+                              <div className="text-sm text-muted-foreground">{new Date(a.date).toLocaleDateString('en-IN', { month:'short', day:'numeric' })} • {a.time}</div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(s)}`}>{statusText(s)}</span>
+                          </div>
+                        );
+                      })}
+                    {appointments.filter(a => (!doctorProfile || a.doctorId === doctorProfile.id)).filter(a => a.status !== 'cancelled' && (a.accepted || a.status === 'completed')).filter(a => (a.patientName || '').toLowerCase().includes(scheduleQuery.toLowerCase())).length === 0 && (
+                      <div className="text-center text-muted-foreground py-8">No matches found</div>
+                    )}
+                  </div>
                 ) : viewMode === 'day' ? (
                   <div className="space-y-2">
                     {TIME_SLOTS.map((slot, idx) => {
-                      const current = filteredAppointments.find(a => (a.time || '') === slot.label && sameDay(new Date(a.date), selectedDate));
+                      const itemsDay = appointments.filter(a => (!doctorProfile || a.doctorId === doctorProfile.id) && a.status !== 'cancelled' && (a.accepted || a.status === 'completed') && sameDay(a.date, selectedDate));
+                      const current = itemsDay.find(a => (a.time || '') === slot.label);
                       const nextSlot = TIME_SLOTS[Math.min(idx+1, TIME_SLOTS.length-1)];
                       if (current) {
-                        const t = typeOfApt(current.symptoms);
+                        const s = current.status as 'upcoming'|'completed'|'cancelled';
                         return (
                           <div key={slot.label} className="p-3 bg-secondary rounded-xl flex items-center justify-between">
                             <div>
                               <div className="font-semibold">{current.patientName}</div>
                               <div className="text-sm text-muted-foreground">{slot.label} - {nextSlot.label} • 30 minutes</div>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${typeColor(t)}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(s)}`}>{statusText(s)}</span>
                           </div>
                         );
                       }
@@ -549,41 +633,42 @@ const DoctorDashboard = () => {
                     })}
                   </div>
                 ) : (
-                  // Week view
                   <div className="overflow-auto">
-                    <div className="min-w-[900px]">
+                    <div className="min-w-[980px]">
                       {(() => {
                         const start = new Date(selectedDate);
                         const day = start.getDay();
-                        // Move to Sunday
                         start.setDate(start.getDate() - day);
                         const days = Array.from({ length: 7 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+                        const isToday = (d: Date) => d.toDateString() === new Date().toDateString();
                         return (
-                          <div>
+                          <div className="border rounded-xl overflow-hidden">
                             <div className="grid" style={{ gridTemplateColumns: `120px repeat(7, 1fr)`}}>
-                              <div />
+                              <div className="sticky top-0 bg-card z-10 border-b p-2" />
                               {days.map((d, i) => (
-                                <div key={i} className="p-2 text-center font-semibold">
+                                <div key={i} className={`p-2 text-center font-semibold sticky top-0 z-10 border-b bg-card ${i > 0 ? 'border-l' : ''} ${isToday(d) ? 'text-primary' : ''}`}>
                                   {d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </div>
                               ))}
                               {TIME_SLOTS.map((slot, r) => (
                                 <>
-                                  <div key={`time-${r}`} className="p-2 text-sm text-muted-foreground border-t">{slot.label}</div>
+                                  <div key={`time-${r}`} className="p-2 text-sm text-muted-foreground border-t border-r sticky left-0 bg-card z-10">{slot.label}</div>
                                   {days.map((d, c) => {
-                                    const item = appointments.find(a => (a.time||'') === slot.label && sameDay(new Date(a.date), d));
+                                    const item = appointments.find(a => (!doctorProfile || a.doctorId === doctorProfile.id) && (a.time||'') === slot.label && sameDay(a.date, d) && a.status !== 'cancelled' && (a.accepted || a.status === 'completed'));
                                     const key = `${r}-${c}`;
+                                    const cellCls = `border-t ${c > 0 ? 'border-l' : ''} min-h-[56px] p-1 ${isToday(d) ? 'bg-accent/30' : ''}`;
                                     if (item) {
-                                      const t = typeOfApt(item.symptoms);
+                                      const s = item.status as 'upcoming'|'completed'|'cancelled';
                                       return (
-                                        <div key={key} className="border-t p-1">
-                                          <div className={`p-2 rounded-md text-xs ${typeColor(t)} whitespace-nowrap overflow-hidden text-ellipsis`}>
-                                            {item.patientName} • {t}
+                                        <div key={key} className={cellCls}>
+                                          <div className="p-2 rounded-md text-xs bg-secondary whitespace-nowrap overflow-hidden text-ellipsis flex items-center justify-between">
+                                            <span className="font-semibold mr-2 truncate">{item.patientName}</span>
+                                            <span className={`px-2 py-0.5 rounded-full ${statusColor(s)}`}>{statusText(s)}</span>
                                           </div>
                                         </div>
                                       );
                                     }
-                                    return <div key={key} className="border-t" />;
+                                    return <div key={key} className={cellCls} />;
                                   })}
                                 </>
                               ))}
@@ -600,23 +685,158 @@ const DoctorDashboard = () => {
 
           {activeTab === "patients" && (
             <div className="space-y-4">
+              {/* Search & Filters */}
               <div className="bg-card rounded-2xl shadow-card p-6">
-                <h2 className="text-xl font-bold mb-4">Patients</h2>
-                <div className="grid gap-3">
-                  {uniquePatients.map((p) => (
-                    <div key={p.phone} className="p-4 bg-secondary rounded-xl flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold">{p.name}</div>
-                        <div className="text-sm text-muted-foreground">{p.phone}</div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">Last visit: {new Date(p.lastVisit).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</div>
-                    </div>
-                  ))}
-                  {uniquePatients.length === 0 && (
-                    <div className="text-center text-muted-foreground py-8">No patients yet</div>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <Input placeholder="Search by name or phone" value={query} onChange={(e) => setQuery(e.target.value)} />
+                  <Input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+                  <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="upcoming">Upcoming</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div />
                 </div>
               </div>
+
+              {/* Patients List */}
+              <div className="bg-card rounded-2xl shadow-card p-6">
+                <h2 className="text-xl font-bold mb-4">Patient Overview</h2>
+                <div className="space-y-3">
+                  {(() => {
+                    // Build rows as appointments (no dedup by phone) and use local date comparisons
+                    const toLocalDate = (iso: string) => {
+                      const d = new Date(iso);
+                      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                    };
+                    const rows = appointments
+                      .filter(a => (!doctorProfile || a.doctorId === doctorProfile.id))
+                      .filter(a => a.status !== 'cancelled' && (a.accepted || a.status === 'completed'))
+                      .filter(a => {
+                        if (!query) return true;
+                        const q = query.toLowerCase();
+                        return (a.patientName||'').toLowerCase().includes(q) || (a.patientPhone||'').toLowerCase().includes(q);
+                      })
+                      .filter(a => (filterDate ? toLocalDate(a.date) === filterDate : true))
+                      .filter(a => (statusFilter !== 'all' ? a.status === statusFilter : true))
+                      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                    return rows.length > 0 ? rows.map((p: any) => {
+                      const status = p.status as 'upcoming'|'completed'|'cancelled';
+                      const color = status === 'upcoming' ? 'bg-blue-100 text-blue-700' : status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                      const age = p.patientDob ? Math.floor((Date.now() - new Date(p.patientDob).getTime()) / (365.25*24*3600*1000)) : null;
+                      return (
+                        <div key={p.id} className="p-4 bg-secondary rounded-xl flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-gradient-card flex items-center justify-center">
+                              <User className="w-6 h-6 text-primary" />
+                            </div>
+                            <div>
+                              <div className="font-semibold">{p.patientName} <span className="text-sm text-muted-foreground">• {p.patientPhone}</span></div>
+                              <div className="text-sm text-muted-foreground">{new Date(p.date).toLocaleDateString('en-IN',{month:'short',day:'numeric'})}, {p.time}</div>
+                              <div className="text-xs text-muted-foreground">{age !== null ? `Age: ${Math.max(age,0)}` : 'Age: -'} • Gender: -</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge className={color} variant="secondary">{status}</Badge>
+                            <Button className="bg-[#5B68EE] hover:bg-[#4A56DD]" size="sm" onClick={() => navigate(`/doctor/patient/${p.patientPhone}`)}>
+                              <Stethoscope className="w-4 h-4 mr-1"/> View Record
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => { if (doctorProfile) { ensureChatThread(doctorProfile.id, p.patientPhone); navigate(`/doctor/messages/${p.patientPhone}`); }}}>
+                              <MessageCircle className="w-4 h-4 mr-1"/> Chat
+                            </Button>
+                            {status !== 'completed' && (
+                              <Button variant="outline" size="sm" onClick={() => setConfirmId(p.id)}>
+                                <CheckCircle2 className="w-4 h-4 mr-1"/> Mark Completed
+                              </Button>
+                            )}
+                            <Button variant="outline" size="sm" onClick={() => setRxOpenFor({ patientPhone: p.patientPhone, aptId: p.id })}>
+                              <Pill className="w-4 h-4 mr-1"/> Add Details
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    }) : (
+                      <div className="text-center text-muted-foreground py-8">No patients found</div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Confirm complete */}
+              <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && setConfirmId(null)}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Mark appointment as completed?</AlertDialogTitle>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-[#5B68EE] hover:bg-[#4A56DD]"
+                      onClick={() => {
+                        if (confirmId) {
+                          updateAppointment(confirmId, { status: 'completed', accepted: true });
+                          toast.success('Appointment marked completed');
+                          setConfirmId(null);
+                        }
+                      }}
+                    >
+                      Confirm
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Add Prescription */}
+              <Dialog open={!!rxOpenFor} onOpenChange={(o) => !o && setRxOpenFor(null)}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add Details</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3 items-center">
+                      <Label className="col-span-1">Diagnosis</Label>
+                      <Input className="col-span-2" value={(rxForm as any).diagnosis || ""} onChange={(e) => setRxForm({ ...rxForm, diagnosis: e.target.value } as any)} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 items-center">
+                      <Label className="col-span-1">Prescribed Medication</Label>
+                      <div className="col-span-2 grid grid-cols-3 gap-2">
+                        <Input placeholder="Medicine" value={rxForm.medicine} onChange={(e) => setRxForm({ ...rxForm, medicine: e.target.value })} />
+                        <Input placeholder="Dosage" value={rxForm.dosage} onChange={(e) => setRxForm({ ...rxForm, dosage: e.target.value })} />
+                        <Input placeholder="Duration" value={rxForm.duration} onChange={(e) => setRxForm({ ...rxForm, duration: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 items-center">
+                      <Label className="col-span-1">Doctor's Instructions</Label>
+                      <Input className="col-span-2" value={(rxForm as any).instructions || ""} onChange={(e) => setRxForm({ ...rxForm, instructions: e.target.value } as any)} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 items-center">
+                      <Label className="col-span-1">Follow-up</Label>
+                      <Input className="col-span-2" value={(rxForm as any).followUp || ""} onChange={(e) => setRxForm({ ...rxForm, followUp: e.target.value } as any)} />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setRxOpenFor(null)}>Cancel</Button>
+                    <Button className="bg-[#5B68EE] hover:bg-[#4A56DD]" onClick={() => {
+                      if (!rxOpenFor || !doctorProfile) return;
+                      if (!rxForm.medicine || !rxForm.dosage || !rxForm.duration) { toast.error('Fill medication fields'); return; }
+                      // Find patient name from appointment or recent matching
+                      const allApts = getAppointments();
+                      const apt = rxOpenFor.aptId ? allApts.find(a => a.id === rxOpenFor.aptId) : allApts.find(a => a.patientPhone === rxOpenFor.patientPhone && a.doctorId === doctorProfile.id);
+                      const patientName = apt?.patientName || '';
+                      addPrescription({ doctorId: doctorProfile.id, patientPhone: rxOpenFor.patientPhone, patientName, appointmentId: rxOpenFor.aptId, items: [{ medicine: rxForm.medicine, dosage: rxForm.dosage, duration: rxForm.duration, notes: rxForm.notes }], diagnosis: (rxForm as any).diagnosis, instructions: (rxForm as any).instructions, followUp: (rxForm as any).followUp });
+                      toast.success('Details saved');
+                      setRxForm({ medicine: "", dosage: "", duration: "", notes: "" });
+                      setRxOpenFor(null);
+                    }}>Save</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 

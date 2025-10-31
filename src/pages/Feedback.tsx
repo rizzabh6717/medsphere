@@ -42,14 +42,14 @@ const Feedback = () => {
     }
     toast.success("Thank you for your feedback!");
     setTimeout(() => {
-navigate("/user/patient/appointments")
+navigate("/patient/appointments")
     }, 1500);
   };
 
   return (
     <div className="min-h-screen bg-gradient-medical py-8">
       <div className="container mx-auto px-4 max-w-3xl">
-<BackButton to="/user/patient/appointments" />
+<BackButton to="/patient/appointments" />
         <h1 className="text-3xl font-bold mb-6 animate-fade-in">Share Your Feedback</h1>
 
         <Card className="p-6 mb-6 animate-fade-in">

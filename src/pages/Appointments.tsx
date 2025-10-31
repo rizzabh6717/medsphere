@@ -88,7 +88,7 @@ const Appointments = () => {
           {status === "completed" && (
             <Button
               size="sm"
-onClick={() => navigate(`/user/patient/feedback/${appointment.id}`)}
+onClick={() => navigate(`/patient/feedback/${appointment.id}`)}
               className="bg-[#5B68EE] hover:bg-[#4A56DD]"
             >
               Give Feedback
@@ -153,7 +153,7 @@ onClick={() => navigate(`/user/patient/feedback/${appointment.id}`)}
                 <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No Upcoming Appointments</h3>
                 <p className="text-muted-foreground mb-6">You don't have any upcoming appointments</p>
-<Button onClick={() => navigate('/user/patient/dashboard')} className="bg-[#5B68EE] hover:bg-[#4A56DD]">Book an Appointment</Button>
+                <Button onClick={() => navigate('/patient/dashboard')} className="bg-[#5B68EE] hover:bg-[#4A56DD]">Book an Appointment</Button>
               </Card>
             )}
           </TabsContent>

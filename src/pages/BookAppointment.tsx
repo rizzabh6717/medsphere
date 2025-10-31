@@ -22,6 +22,12 @@ const BookAppointment = () => {
     name: "",
     dob: "",
     phone: "",
+    gender: "",
+    weight: "",
+    height: "",
+    lastAppointment: "",
+    registerDate: new Date().toISOString().slice(0,10),
+    conditions: "",
     symptoms: "",
   });
 
@@ -51,6 +57,16 @@ const BookAppointment = () => {
 
     // Save appointment to localStorage with conflict handling
     try {
+      // Try to infer last appointment if not provided
+      let inferredLast: string | undefined = undefined;
+      try {
+        const all = JSON.parse(localStorage.getItem('appointments') || '[]');
+        const prev = all
+          .filter((a: any) => a.patientPhone === formData.phone && a.doctorId === String(doctorId || 'unknown'))
+          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+        inferredLast = prev ? prev.date : undefined;
+      } catch {}
+
       const appointment = saveAppointment({
         doctorId: doctorId || 'unknown',
         doctorName: doctorName || 'Doctor',
@@ -63,6 +79,14 @@ const BookAppointment = () => {
         symptoms: formData.symptoms,
         status: 'upcoming',
         paid: false,
+        patientGender: (formData.gender as any) || undefined,
+        patientWeightKg: formData.weight ? Number(formData.weight) : undefined,
+        patientHeightCm: formData.height ? Number(formData.height) : undefined,
+        lastAppointmentDate: formData.lastAppointment || inferredLast,
+        registerDate: formData.registerDate || new Date().toISOString(),
+        medicalConditions: formData.conditions
+          ? formData.conditions.split(',').map((s) => s.trim()).filter(Boolean)
+          : undefined,
       });
 
       // Add notification
@@ -80,7 +104,7 @@ const BookAppointment = () => {
     
     // Navigate to appointments page after a short delay
     setTimeout(() => {
-      navigate("/user/patient/appointments");
+      navigate("/patient/appointments");
     }, 1500);
     } catch (e: any) {
       toast.error(e?.message || 'Unable to book this slot.');
@@ -190,15 +214,52 @@ const BookAppointment = () => {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="dob">Date of Birth *</Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    value={formData.dob}
-                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="mt-1.5"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="dob">Date of Birth *</Label>
+                    <Input
+                      id="dob"
+                      type="date"
+                      value={formData.dob}
+                      onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="gender">Sex</Label>
+                    <select id="gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="mt-1.5 w-full h-10 rounded-md border px-3 bg-background">
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label htmlFor="weight">Weight (kg)</Label>
+                    <Input id="weight" inputMode="decimal" value={formData.weight} onChange={(e) => setFormData({ ...formData, weight: e.target.value })} placeholder="e.g. 68" className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label htmlFor="height">Height (cm)</Label>
+                    <Input id="height" inputMode="decimal" value={formData.height} onChange={(e) => setFormData({ ...formData, height: e.target.value })} placeholder="e.g. 172" className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label htmlFor="registerDate">Register Date</Label>
+                    <Input id="registerDate" type="date" value={formData.registerDate} onChange={(e) => setFormData({ ...formData, registerDate: e.target.value })} className="mt-1.5" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="lastAppointment">Last Appointment</Label>
+                    <Input id="lastAppointment" type="date" value={formData.lastAppointment} onChange={(e) => setFormData({ ...formData, lastAppointment: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label htmlFor="conditions">Medical Conditions</Label>
+                    <Input id="conditions" value={formData.conditions} onChange={(e) => setFormData({ ...formData, conditions: e.target.value })} placeholder="e.g. Diabetes, Hypertension" className="mt-1.5" />
+                  </div>
                 </div>
 
                 <div>

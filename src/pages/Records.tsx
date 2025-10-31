@@ -5,30 +5,48 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NavigationHeader from "@/components/NavigationHeader";
 import { FileText, Download, Calendar, User, Pill, Activity } from "lucide-react";
-import { getAppointments } from "@/lib/storage";
+import { getAppointments, getPrescriptions, getUserProfile } from "@/lib/storage";
 
 const Records = () => {
   const [completedAppointments, setCompletedAppointments] = useState<any[]>([]);
+  const [rxList, setRxList] = useState<any[]>([]);
 
   useEffect(() => {
-    const appointments = getAppointments();
-    const completed = appointments.filter(apt => apt.status === 'completed');
-    setCompletedAppointments(completed);
+    const load = () => {
+      const appointments = getAppointments();
+      const completed = appointments.filter(apt => apt.status === 'completed');
+      setCompletedAppointments(completed);
+      try {
+        const profile = getUserProfile();
+        const phoneRaw = profile?.phone || '';
+        const normalize = (s: string) => (s || '').replace(/\D/g, '');
+        const phone = normalize(phoneRaw);
+        const allRx = getPrescriptions();
+        // Build phone set from all appointments on this device (patient-side), no name filter to avoid mismatch
+        const phoneSet = new Set(appointments.map(a => normalize(a.patientPhone)).filter(Boolean));
+        // Use relaxed matching: by phone in set, or by exact phone, or by partial name match
+        const nameLc = (profile?.name || '').toLowerCase();
+        const firstNameLc = nameLc.split(' ')[0] || '';
+        const filtered = allRx.filter((r: any) => {
+          const rp = normalize(r.patientPhone);
+          const rname = (r.patientName || '').toLowerCase();
+          const nameMatch = nameLc ? (rname.includes(nameLc) || (firstNameLc && rname.includes(firstNameLc))) : false;
+          return (phone && rp === phone) || phoneSet.has(rp) || nameMatch;
+        });
+        setRxList(filtered);
+      } catch {}
+    };
+    load();
+    const onUpdate = () => load();
+    window.addEventListener('prescriptions:updated', onUpdate);
+    return () => window.removeEventListener('prescriptions:updated', onUpdate);
   }, []);
 
-  // Mock prescriptions - in real app, these would come from the appointment details
-  const getMockPrescription = (appointmentId: string) => ({
-    medications: [
-      { name: "Aspirin", dosage: "100mg", frequency: "Once daily", duration: "30 days" },
-      { name: "Vitamin D3", dosage: "1000 IU", frequency: "Once daily", duration: "60 days" },
-    ],
-    instructions: "Take medications after meals. Avoid alcohol. Get adequate rest.",
-    followUp: "Follow up in 2 weeks if symptoms persist",
-    diagnosis: "Mild hypertension and vitamin deficiency",
-  });
-
-  const PrescriptionCard = ({ appointment }: any) => {
-    const prescription = getMockPrescription(appointment.id);
+  const PrescriptionCard = ({ rx }: any) => {
+    // Attempt to enrich with appointment/doctor info and patient name
+    const appointments = getAppointments();
+    const apt = rx.appointmentId ? appointments.find((a: any) => a.id === rx.appointmentId) : appointments.find((a: any) => a.patientPhone === rx.patientPhone && a.doctorId === rx.doctorId);
+    const displayPatient = rx.patientName || apt?.patientName || 'You';
     
     return (
       <Card className="p-6 mb-4 animate-fade-in hover:shadow-md transition-shadow">
@@ -38,11 +56,12 @@ const Records = () => {
               <FileText className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-1">{appointment.doctorName}</h3>
-              <p className="text-muted-foreground">{appointment.doctorSpecialty}</p>
+              <h3 className="text-xl font-bold mb-1">{apt?.doctorName || 'Doctor'}</h3>
+              <p className="text-muted-foreground">{apt?.doctorSpecialty || ''}</p>
+              <div className="text-sm text-muted-foreground mt-1">Patient: <span className="font-medium text-foreground">{displayPatient}</span></div>
               <div className="flex items-center gap-2 mt-2 text-sm">
                 <Calendar className="w-4 h-4 text-primary" />
-                <span>{new Date(appointment.date).toLocaleDateString('en-IN', { 
+                <span>{new Date(rx.createdAt).toLocaleDateString('en-IN', { 
                   month: 'short', 
                   day: 'numeric', 
                   year: 'numeric' 
@@ -50,15 +69,17 @@ const Records = () => {
               </div>
             </div>
           </div>
-          <Badge variant="secondary">Completed</Badge>
+          <Badge variant="secondary">{apt?.status === 'completed' ? 'Completed' : 'Issued'}</Badge>
         </div>
 
-        <div className="space-y-4 mt-6">
+        <div className="space-y-4 mt-2">
           {/* Diagnosis */}
-          <div className="border-l-4 border-primary pl-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-1">Diagnosis</h4>
-            <p className="text-foreground">{prescription.diagnosis}</p>
-          </div>
+          {rx.diagnosis && (
+            <div className="border-l-4 border-primary pl-4">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-1">Diagnosis</h4>
+              <p className="text-foreground">{rx.diagnosis}</p>
+            </div>
+          )}
 
           {/* Medications */}
           <div>
@@ -67,16 +88,15 @@ const Records = () => {
               <h4 className="font-semibold">Prescribed Medications</h4>
             </div>
             <div className="space-y-2">
-              {prescription.medications.map((med, idx) => (
+              {rx.items.map((med: any, idx: number) => (
                 <div key={idx} className="bg-accent/30 rounded-lg p-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-semibold">{med.name}</p>
+                      <p className="font-semibold">{med.medicine}</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {med.dosage} • {med.frequency}
+                        {med.dosage} • {med.duration}
                       </p>
                     </div>
-                    <Badge variant="outline">{med.duration}</Badge>
                   </div>
                 </div>
               ))}
@@ -84,22 +104,24 @@ const Records = () => {
           </div>
 
           {/* Instructions */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Activity className="w-4 h-4 text-primary" />
-              <h4 className="font-semibold">Doctor's Instructions</h4>
+          {rx.instructions && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="w-4 h-4 text-primary" />
+                <h4 className="font-semibold">Doctor's Instructions</h4>
+              </div>
+              <p className="text-muted-foreground text-sm bg-accent/20 p-3 rounded-lg">
+                {rx.instructions}
+              </p>
             </div>
-            <p className="text-muted-foreground text-sm bg-accent/20 p-3 rounded-lg">
-              {prescription.instructions}
-            </p>
-          </div>
+          )}
 
           {/* Follow-up */}
-          {prescription.followUp && (
+          {rx.followUp && (
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
               <p className="text-sm">
                 <span className="font-semibold">Follow-up: </span>
-                {prescription.followUp}
+                {rx.followUp}
               </p>
             </div>
           )}
@@ -147,9 +169,9 @@ const Records = () => {
           </TabsList>
 
           <TabsContent value="prescriptions">
-            {completedAppointments.length > 0 ? (
-              completedAppointments.map((appointment) => (
-                <PrescriptionCard key={appointment.id} appointment={appointment} />
+            {rxList.length > 0 ? (
+              rxList.map((rx) => (
+                <PrescriptionCard key={rx.id} rx={rx} />
               ))
             ) : (
               <Card className="p-12 text-center">
@@ -158,7 +180,7 @@ const Records = () => {
                 <p className="text-muted-foreground mb-6">
                   Your medical records and prescriptions will appear here after completed appointments
                 </p>
-<Button onClick={() => window.location.href = '/user/patient/dashboard'} className="bg-[#5B68EE] hover:bg-[#4A56DD]">
+                <Button onClick={() => window.location.href = '/patient/dashboard'} className="bg-[#5B68EE] hover:bg-[#4A56DD]">
                   Book an Appointment
                 </Button>
               </Card>

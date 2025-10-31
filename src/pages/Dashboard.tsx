@@ -14,6 +14,7 @@ import {
   Clock,
   Stethoscope
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -28,106 +29,16 @@ const Dashboard = () => {
   }, []);
 
   const allDoctors = [
-    {
-      id: 1,
-      name: "Dr. Prakash Das",
-      specialization: "Psychologist",
-      experience: "7+ years",
-      availability: "Available today",
-      timing: "09:30 AM - 07:00 PM",
-      rating: 4.8,
-      patients: 500,
-    },
-    {
-      id: 2,
-      name: "Dr. Sarah Johnson",
-      specialization: "Cardiologist",
-      experience: "10+ years",
-      availability: "Available today",
-      timing: "10:00 AM - 06:00 PM",
-      rating: 4.9,
-      patients: 750,
-    },
-    {
-      id: 3,
-      name: "Dr. Rajesh Kumar",
-      specialization: "Orthopedic",
-      experience: "12+ years",
-      availability: "Available today",
-      timing: "08:00 AM - 04:00 PM",
-      rating: 4.7,
-      patients: 600,
-    },
-    {
-      id: 4,
-      name: "Dr. Priya Sharma",
-      specialization: "Pediatrician",
-      experience: "8+ years",
-      availability: "Available today",
-      timing: "09:00 AM - 05:00 PM",
-      rating: 4.9,
-      patients: 850,
-    },
-    {
-      id: 5,
-      name: "Dr. Amit Patel",
-      specialization: "Dermatologist",
-      experience: "9+ years",
-      availability: "Available today",
-      timing: "10:00 AM - 06:00 PM",
-      rating: 4.6,
-      patients: 520,
-    },
-    {
-      id: 6,
-      name: "Dr. Neha Gupta",
-      specialization: "Neurologist",
-      experience: "11+ years",
-      availability: "Available today",
-      timing: "09:00 AM - 05:00 PM",
-      rating: 4.8,
-      patients: 680,
-    },
-    {
-      id: 7,
-      name: "Dr. Vikram Singh",
-      specialization: "Gastroenterologist",
-      experience: "14+ years",
-      availability: "Available today",
-      timing: "08:00 AM - 04:00 PM",
-      rating: 4.7,
-      patients: 720,
-    },
-    {
-      id: 8,
-      name: "Dr. Anjali Desai",
-      specialization: "General Physician",
-      experience: "6+ years",
-      availability: "Available today",
-      timing: "09:00 AM - 07:00 PM",
-      rating: 4.5,
-      patients: 450,
-    },
-    {
-      id: 9,
-      name: "Dr. Rohit Mehta",
-      specialization: "ENT Specialist",
-      experience: "10+ years",
-      availability: "Available today",
-      timing: "10:00 AM - 05:00 PM",
-      rating: 4.6,
-      patients: 580,
-    },
-    {
-      id: 10,
-      name: "Dr. Kavita Rao",
-      specialization: "Gynecologist",
-      experience: "13+ years",
-      availability: "Available today",
-      timing: "09:00 AM - 06:00 PM",
-      rating: 4.9,
-      patients: 890,
-    },
+    { id: 1,  name: "Dr. Prakash Das",    specialization: "Psychologist",       experience: "7+ years",  availability: "Available today", timing: "09:30 AM - 07:00 PM", rating: 4.8, patients: 500,  gender: 'male' },
+    { id: 2,  name: "Dr. Sarah Johnson",   specialization: "Cardiologist",        experience: "10+ years", availability: "Available today", timing: "10:00 AM - 06:00 PM", rating: 4.9, patients: 750,  gender: 'female' },
+    { id: 3,  name: "Dr. Rajesh Kumar",    specialization: "Orthopedic",          experience: "12+ years", availability: "Available today", timing: "08:00 AM - 04:00 PM", rating: 4.7, patients: 600,  gender: 'male' },
+    { id: 4,  name: "Dr. Priya Sharma",    specialization: "Pediatrician",        experience: "8+ years",  availability: "Available today", timing: "09:00 AM - 05:00 PM", rating: 4.9, patients: 850,  gender: 'female' },
+    { id: 5,  name: "Dr. Amit Patel",      specialization: "Dermatologist",       experience: "9+ years",  availability: "Available today", timing: "10:00 AM - 06:00 PM", rating: 4.6, patients: 520,  gender: 'male' },
+    { id: 6,  name: "Dr. Neha Gupta",      specialization: "Neurologist",         experience: "11+ years", availability: "Available today", timing: "09:00 AM - 05:00 PM", rating: 4.8, patients: 680,  gender: 'female' },
+    { id: 7,  name: "Dr. Vikram Singh",    specialization: "Gastroenterologist",  experience: "14+ years", availability: "Available today", timing: "08:00 AM - 04:00 PM", rating: 4.7, patients: 720,  gender: 'male' },
+    { id: 8,  name: "Dr. Anjali Desai",    specialization: "General Physician",   experience: "6+ years",  availability: "Available today", timing: "09:00 AM - 07:00 PM", rating: 4.5, patients: 450,  gender: 'female' },
+    { id: 9,  name: "Dr. Rohit Mehta",     specialization: "ENT Specialist",      experience: "10+ years", availability: "Available today", timing: "10:00 AM - 05:00 PM", rating: 4.6, patients: 580,  gender: 'male' },
+    { id: 10, name: "Dr. Kavita Rao",      specialization: "Gynecologist",        experience: "13+ years", availability: "Available today", timing: "09:00 AM - 06:00 PM", rating: 4.9, patients: 890,  gender: 'female' },
   ];
 
   // Filter doctors based on search query
@@ -141,10 +52,10 @@ const Dashboard = () => {
   });
 
   const quickActions = [
-    { icon: Stethoscope, label: "Find a Doctor", path: "/user/patient/dashboard" },
-    { icon: Calendar, label: "Appointments", path: "/user/patient/appointments" },
-    { icon: FileText, label: "Records", path: "/user/patient/records" },
-    { icon: User, label: "Profile", path: "/user/patient/profile" },
+    { icon: Stethoscope, label: "Find a Doctor", path: "/patient/dashboard" },
+    { icon: Calendar, label: "Appointments", path: "/patient/appointments" },
+    { icon: FileText, label: "Records", path: "/patient/records" },
+    { icon: User, label: "Profile", path: "/patient/profile" },
   ];
 
   return (
@@ -166,7 +77,7 @@ const Dashboard = () => {
               variant="outline"
               size="icon"
               className="rounded-full"
-onClick={() => navigate("/user/patient/profile")}
+onClick={() => navigate("/patient/profile")}
             >
               <User className="w-5 h-5" />
             </Button>
@@ -220,11 +131,17 @@ onClick={() => navigate("/user/patient/profile")}
               key={doctor.id}
               className="bg-card rounded-2xl shadow-card hover:shadow-hover transition-all p-6 cursor-pointer animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
-onClick={() => navigate(`/user/patient/doctor/${doctor.id}`)}
+onClick={() => navigate(`/patient/doctor/${doctor.id}`)}
             >
               <div className="flex gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-card flex items-center justify-center flex-shrink-0">
-                  <Stethoscope className="w-10 h-10 text-primary" />
+                <div className="w-20 h-20 rounded-2xl bg-gradient-card flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <Avatar className="w-20 h-20">
+                    <AvatarImage
+                      src={doctor.gender === 'female' ? "/assets/female%20doc.png" : "/assets/male%20doctor.png"}
+                      alt={doctor.name}
+                    />
+                    <AvatarFallback>{doctor.name.split(' ').map(n => n[0]).join('').slice(0,2)}</AvatarFallback>
+                  </Avatar>
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-foreground mb-1">
@@ -263,7 +180,7 @@ onClick={() => navigate(`/user/patient/doctor/${doctor.id}`)}
               <Button 
                 className="w-full mt-4 rounded-xl bg-[#5B68EE] hover:bg-[#4A56DD]" 
                 size="lg"
-onClick={() => navigate('/user/patient/book-appointment', {
+onClick={() => navigate('/patient/book-appointment', {
                   state: { 
                     doctorId: doctor.id, 
                     doctorName: doctor.name, 

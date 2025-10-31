@@ -49,8 +49,8 @@ const OTP = () => {
   const displayContact = maskContact(email || phone || "");
 
   // Get stored OTP from localStorage
-  const storedOTP = localStorage.getItem('tempOTP');
-  const otpTimestamp = localStorage.getItem('otpTimestamp');
+  const storedOTP = sessionStorage.getItem('tempOTP');
+  const otpTimestamp = sessionStorage.getItem('otpTimestamp');
 
   useEffect(() => {
     if (timer > 0) {
@@ -64,8 +64,8 @@ const OTP = () => {
   }, [timer]);
 
   const handleVerify = () => {
-    if (otp.length !== 6) {
-      toast.error("Please enter a valid 6-digit OTP");
+    if (otp.length !== 4) {
+      toast.error("Please enter a valid 4-digit OTP");
       return;
     }
 
@@ -76,19 +76,21 @@ const OTP = () => {
 
     if (otpAge > OTP_EXPIRY_TIME) {
       toast.error("OTP has expired. Please request a new one.");
-      localStorage.removeItem('tempOTP');
-      localStorage.removeItem('otpTimestamp');
+      sessionStorage.removeItem('tempOTP');
+      sessionStorage.removeItem('otpTimestamp');
       return;
     }
 
     // Validate OTP
     if (otp === storedOTP) {
       // Clear OTP from storage
-      localStorage.removeItem('tempOTP');
-      localStorage.removeItem('otpTimestamp');
+      sessionStorage.removeItem('tempOTP');
+      sessionStorage.removeItem('otpTimestamp');
       
       // If coming from signup, create user profile
       if (from === 'signup' && userName && email) {
+        // Set current user context by email
+        sessionStorage.setItem('currentUserEmail', (email||'').toLowerCase());
         saveUserProfile({
           name: userName,
           email: email,
@@ -103,17 +105,21 @@ const OTP = () => {
       // Set authentication status
       setAuthenticated(true);
       
-      // Get user role from localStorage
-      const userRole = localStorage.getItem('userRole') || 'patient';
+      // Determine user role (prefer role passed from Login)
+      const roleFromState = location.state?.role as string | undefined;
+      const userRole = (roleFromState && (roleFromState === 'doctor' || roleFromState === 'patient'))
+        ? roleFromState
+        : (sessionStorage.getItem('userRole') || 'patient');
+      sessionStorage.setItem('userRole', userRole);
       
       toast.success("✅ OTP verified successfully!");
       console.log('✅ OTP Verification: Success');
       
       // Navigate based on role
-      if (userRole === 'doctor') {
-        navigate("/user/doctor/dashboard");
+if (userRole === 'doctor') {
+        navigate("/doctor/dashboard");
       } else {
-        navigate("/user/patient/dashboard");
+        navigate("/patient/dashboard");
       }
     } else {
       setAttempts(attempts + 1);
@@ -122,8 +128,8 @@ const OTP = () => {
       
       if (attempts >= 2) {
         toast.error("Too many incorrect attempts. Please request a new OTP.");
-        localStorage.removeItem('tempOTP');
-        localStorage.removeItem('otpTimestamp');
+        sessionStorage.removeItem('tempOTP');
+        sessionStorage.removeItem('otpTimestamp');
         setTimeout(() => navigate(-1), 2000);
       } else {
         toast.error("❌ Incorrect OTP. Please try again.");
@@ -135,11 +141,11 @@ const OTP = () => {
   const handleResend = () => {
     if (canResend) {
       // Generate new OTP
-      const newOTP = Math.floor(100000 + Math.random() * 900000).toString();
+      const newOTP = Math.floor(1000 + Math.random() * 9000).toString();
       
       // Store new OTP
-      localStorage.setItem('tempOTP', newOTP);
-      localStorage.setItem('otpTimestamp', Date.now().toString());
+      sessionStorage.setItem('tempOTP', newOTP);
+      sessionStorage.setItem('otpTimestamp', Date.now().toString());
       
       // Log to console
       console.log('🔄 New OTP Generated:', newOTP);
@@ -173,7 +179,7 @@ const OTP = () => {
 
           <div className="flex justify-center mb-8">
             <InputOTP
-              maxLength={6}
+              maxLength={4}
               value={otp}
               onChange={(value) => setOtp(value)}
             >
@@ -182,8 +188,6 @@ const OTP = () => {
                 <InputOTPSlot index={1} className="w-14 h-14 text-2xl" />
                 <InputOTPSlot index={2} className="w-14 h-14 text-2xl" />
                 <InputOTPSlot index={3} className="w-14 h-14 text-2xl" />
-                <InputOTPSlot index={4} className="w-14 h-14 text-2xl" />
-                <InputOTPSlot index={5} className="w-14 h-14 text-2xl" />
               </InputOTPGroup>
             </InputOTP>
           </div>
@@ -212,7 +216,7 @@ const OTP = () => {
           <Button
             onClick={handleVerify}
             className="w-full h-12 rounded-xl text-lg bg-[#5B68EE] hover:bg-[#4A56DD]"
-            disabled={otp.length !== 6}
+            disabled={otp.length !== 4}
           >
             Verify
           </Button>

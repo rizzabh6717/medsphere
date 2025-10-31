@@ -29,7 +29,7 @@ const Reschedule = () => {
         setDate(new Date(found.date));
       } else {
         toast.error("Appointment not found");
-navigate("/user/patient/appointments")
+navigate("/patient/appointments")
       }
     }
   }, [id, location.state, navigate]);
@@ -106,7 +106,7 @@ navigate("/user/patient/appointments")
   return (
     <div className="min-h-screen bg-gradient-medical py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-<BackButton to="/user/patient/appointments" />
+<BackButton to="/patient/appointments" />
         <h1 className="text-3xl font-bold mb-6 animate-fade-in">Reschedule Appointment</h1>
 
         {appointment && (

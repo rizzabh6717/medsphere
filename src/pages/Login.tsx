@@ -17,7 +17,7 @@ const Login = () => {
   const handleRoleSelect = (newRole: "patient" | "doctor") => {
     setRole(newRole);
     // Update URL to reflect selection as requested
-    navigate(`/user/${newRole}`, { replace: true });
+    navigate(`/login?role=${newRole}`, { replace: true });
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -38,16 +38,19 @@ const Login = () => {
         toast.error('No matching doctor found for this email');
         return;
       }
-      localStorage.setItem('doctorProfile', JSON.stringify({ id: String(doc.id), name: doc.name, specialty: doc.specialization }));
+      sessionStorage.setItem('doctorProfile', JSON.stringify({ id: String(doc.id), name: doc.name, specialty: doc.specialization }));
     }
     
-    // Generate a random 6-digit OTP
-    const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate a random 4-digit OTP
+    const generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
     
     // Store OTP and user role temporarily in localStorage
-    localStorage.setItem('tempOTP', generatedOTP);
-    localStorage.setItem('otpTimestamp', Date.now().toString());
-    localStorage.setItem('userRole', role);
+    sessionStorage.setItem('tempOTP', generatedOTP);
+    sessionStorage.setItem('otpTimestamp', Date.now().toString());
+    sessionStorage.setItem('userRole', role);
+    if (email && email.includes('@')) {
+      sessionStorage.setItem('currentUserEmail', email.toLowerCase());
+    }
     
     // Log OTP to console for demo purposes
     console.log('🔐 OTP Generated:', generatedOTP);
@@ -55,8 +58,8 @@ const Login = () => {
     
     toast.success(`OTP sent to ${email}`);
     
-    // Navigate to OTP verification
-    navigate("/otp", { state: { email, from: 'login' } });
+    // Navigate to OTP verification (carry role to ensure correct redirect)
+    navigate("/otp", { state: { email, from: 'login', role } });
   };
 
   return (
