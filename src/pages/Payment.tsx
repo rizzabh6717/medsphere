@@ -94,7 +94,7 @@ const Payment = () => {
         <div className="bg-white rounded-lg px-6 py-4 mb-6 flex items-center justify-between border">
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-6 h-6 text-[#5B68EE]" />
-            <h1 className="text-2xl font-bold">MediSphere - Secure Payment</h1>
+            <h1 className="text-2xl font-bold">MedSphere - Secure Payment</h1>
           </div>
           {appointment?.paid && <Badge className="bg-emerald-600">Paid</Badge>}
         </div>

@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { addPrescription, ensureChatThread, updateAppointment, getAppointments, clearAllMedicalData } from "@/lib/storage";
 import { toast } from "sonner";
-import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2 } from "lucide-react";import DoctorWeekCalendar from "@/components/DoctorWeekCalendar";
+import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2 } from "lucide-react";
+import DoctorWeekCalendar from "@/components/DoctorWeekCalendar";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -254,7 +255,7 @@ const DoctorDashboard = () => {
                 }
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                activeTab === item.value
+                (activeTab === item.value && item.value !== 'bodyview' && item.value !== 'messages')
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-secondary"
               } ${!sidebarOpen ? 'justify-center' : ''}`}
