@@ -70,7 +70,7 @@ const Appointments = () => {
           {status === "upcoming" && (
             <>
               {!appointment.paid && (
-                <Button size="sm" className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white">
+                <Button size="sm" className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white" onClick={() => navigate(`/patient/payment/${appointment.id}`)}>
                   <CreditCard className="w-4 h-4 mr-1" />
                   Pay
                 </Button>

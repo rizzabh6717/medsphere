@@ -37,6 +37,9 @@ import DoctorPatientRecord from "./pages/DoctorPatientRecord";
 import DoctorChat from "./pages/DoctorChat";
 import DoctorMessages from "./pages/DoctorMessages";
 
+// Payments
+import Payment from "./pages/Payment";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -76,6 +79,7 @@ const App = () => {
           <Route path="/patient/queue" element={<ProtectedRoute roles={['patient']}><QueueTracking /></ProtectedRoute>} />
           <Route path="/patient/profile" element={<ProtectedRoute roles={['patient']}><Profile /></ProtectedRoute>} />
           <Route path="/patient/records" element={<ProtectedRoute roles={['patient']}><Records /></ProtectedRoute>} />
+          <Route path="/patient/payment/:id" element={<ProtectedRoute roles={['patient']}><Payment /></ProtectedRoute>} />
 
           {/* Doctor Routes */}
           <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />

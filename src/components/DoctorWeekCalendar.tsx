@@ -57,7 +57,6 @@ const DoctorWeekCalendar = ({ doctorId }: Props) => {
   const load = () => {
     const all = getAppointments();
     const filtered = (doctorId ? all.filter((a: any) => a.doctorId === doctorId) : all)
-      .filter((a: any) => a.status !== "cancelled" || a.accepted)
       .map((a: any) => {
         const start = parseTimeToDate(a.date, a.time);
         const end = new Date(start.getTime() + 30 * 60 * 1000);
@@ -138,26 +137,26 @@ const DoctorWeekCalendar = ({ doctorId }: Props) => {
   };
 
   const EventComp = ({ event }: { event: AptEvent }) => {
+    const start = event.start as Date;
+    const end = event.end as Date;
+    const tag = event.status === 'completed' ? 'Consulted' : event.status === 'cancelled' ? 'Cancelled' : 'Consultation';
+    const tagCls = event.status === 'completed' ? 'bg-green-100 text-green-700' : event.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700';
+    const fmt = (d: Date) => {
+      const hh = d.getHours();
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      const ampm = hh >= 12 ? "PM" : "AM";
+      const h12 = ((hh + 11) % 12) + 1;
+      return `${String(h12).padStart(2, "0")}:${mm} ${ampm}`;
+    };
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="w-full h-full px-2 py-1 rounded-xl flex items-center justify-between gap-2 overflow-hidden cursor-grab active:cursor-grabbing">
+            <div className="group w-full h-full px-2 py-1.5 rounded-xl flex items-center justify-between gap-2 overflow-visible cursor-grab active:cursor-grabbing transition-transform duration-200 ease-out hover:scale-[1.05] hover:-translate-y-0.5 hover:shadow-xl">
               <div className="min-w-0">
-                <div className="text-xs font-semibold truncate">{event.patientName}</div>
-                <div className="text-[10px] text-muted-foreground truncate">{event.symptoms || "Consultation"}</div>
+                <div className="text-[12px] font-semibold leading-tight truncate group-hover:text-foreground">{event.patientName}</div>
               </div>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="h-6 px-2 text-[10px] rounded-md"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPendingCancel(event);
-                }}
-              >
-                Cancel
-              </Button>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 ${tagCls}`}>{tag}</span>
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
@@ -165,7 +164,8 @@ const DoctorWeekCalendar = ({ doctorId }: Props) => {
               <div className="font-semibold">{event.patientName}</div>
               <div>Phone: {event.patientPhone || "-"}</div>
               <div>Reason: {event.symptoms || "Consultation"}</div>
-              <div>Status: {event.status}</div>
+              <div>Time: {fmt(start)} - {fmt(end)}</div>
+              <div>Status: {tag}</div>
             </div>
           </TooltipContent>
         </Tooltip>
@@ -176,7 +176,15 @@ const DoctorWeekCalendar = ({ doctorId }: Props) => {
   const defaultDate = useMemo(() => new Date(), []);
 
   return (
-    <div className="bg-card rounded-2xl shadow-card overflow-hidden">
+    <div className="bg-card rounded-2xl shadow-card overflow-hidden relative">
+      {/* Calendar style overrides for visibility */}
+      <style>{`
+        .rbc-time-slot { height: 56px; }
+        .rbc-event-label { display: none !important; }
+        .rbc-event-content { white-space: normal !important; }
+        .rbc-event { overflow: visible; }
+        .rbc-time-slot .rbc-event-container, .rbc-day-slot .rbc-event { margin: 0 6px; }
+      `}</style>
       {loading && (
         <div className="absolute inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center z-10">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
@@ -192,13 +200,15 @@ const DoctorWeekCalendar = ({ doctorId }: Props) => {
           defaultDate={defaultDate}
           step={30}
           timeslots={1}
+          min={new Date(new Date().setHours(8,0,0,0))}
+          max={new Date(new Date().setHours(18,0,0,0))}
           popup
           components={{ event: EventComp as any }}
           eventPropGetter={eventPropGetter as any}
           onEventDrop={onEventDrop}
           onEventResize={onEventResize}
           resizable
-          style={{ height: 700 }}
+          style={{ height: 760 }}
           dayPropGetter={(date) => {
             const isToday = new Date().toDateString() === new Date(date).toDateString();
             return isToday ? { className: "bg-accent/30" } : {};
