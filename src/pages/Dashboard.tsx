@@ -12,7 +12,8 @@ import {
   MapPin,
   Star,
   Clock,
-  Stethoscope
+  Stethoscope,
+  CalendarDays
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -55,6 +56,7 @@ const Dashboard = () => {
     { icon: Stethoscope, label: "Find a Doctor", path: "/patient/dashboard" },
     { icon: Calendar, label: "Appointments", path: "/patient/appointments" },
     { icon: FileText, label: "Records", path: "/patient/records" },
+    { icon: CalendarDays, label: "Follow-ups", path: "/patient/followups" },
     { icon: User, label: "Profile", path: "/patient/profile" },
   ];
 

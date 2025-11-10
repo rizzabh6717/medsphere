@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { addPrescription, ensureChatThread, updateAppointment, getAppointments, clearAllMedicalData } from "@/lib/storage";
+import { addPrescription, ensureChatThread, updateAppointment, getAppointments, clearAllMedicalData, addFollowUp } from "@/lib/storage";
 import { toast } from "sonner";
 import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2 } from "lucide-react";
 import DoctorWeekCalendar from "@/components/DoctorWeekCalendar";
@@ -714,7 +714,7 @@ const DoctorDashboard = () => {
                                 <CheckCircle2 className="w-4 h-4 mr-1"/> Mark Completed
                               </Button>
                             )}
-                            <Button variant="outline" size="sm" onClick={() => setRxOpenFor({ patientPhone: p.patientPhone, aptId: p.id })}>
+                            <Button variant="outline" size="sm" onClick={() => navigate(`/doctor/prescription/${p.id}`)}>
                               <Pill className="w-4 h-4 mr-1"/> Add Details
                             </Button>
                           </div>
@@ -789,6 +789,24 @@ const DoctorDashboard = () => {
                       const apt = rxOpenFor.aptId ? allApts.find(a => a.id === rxOpenFor.aptId) : allApts.find(a => a.patientPhone === rxOpenFor.patientPhone && a.doctorId === doctorProfile.id);
                       const patientName = apt?.patientName || '';
                       addPrescription({ doctorId: doctorProfile.id, patientPhone: rxOpenFor.patientPhone, patientName, appointmentId: rxOpenFor.aptId, items: [{ medicine: rxForm.medicine, dosage: rxForm.dosage, duration: rxForm.duration, notes: rxForm.notes }], diagnosis: (rxForm as any).diagnosis, instructions: (rxForm as any).instructions, followUp: (rxForm as any).followUp });
+                      // If a follow-up note was provided, also create a follow-up entry for the patient dashboard
+                      if ((rxForm as any).followUp) {
+                        const defaultDate = new Date();
+                        defaultDate.setDate(defaultDate.getDate() + 7); // default: 1 week later
+                        const followUpPayload = {
+                          patientId: (rxOpenFor.patientPhone || '').replace(/\D/g, ''),
+                          patientName,
+                          doctorId: doctorProfile.id,
+                          doctorName: doctorProfile.name,
+                          doctorSpecialty: doctorProfile.specialty || '',
+                          date: defaultDate.toISOString(),
+                          time: '10:00',
+                          notes: (rxForm as any).followUp,
+                          status: 'scheduled' as const,
+                        };
+                        addFollowUp(followUpPayload);
+                        toast.success('Follow-up scheduled in patient view');
+                      }
                       toast.success('Details saved');
                       setRxForm({ medicine: "", dosage: "", duration: "", notes: "" });
                       setRxOpenFor(null);

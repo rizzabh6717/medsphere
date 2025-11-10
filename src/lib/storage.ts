@@ -307,6 +307,88 @@ export const addPrescription = (p: Omit<Prescription, 'id' | 'createdAt'>): Pres
   return item;
 };
 
+// Alias for addPrescription to match the import in PrescriptionManagement
+export const savePrescription = addPrescription;
+
+// Follow-up related functions
+export interface FollowUp {
+  id: string;
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  doctorSpecialty: string;
+  date: string;
+  time: string;
+  notes?: string;
+  status: "scheduled" | "completed" | "missed" | "rescheduled";
+  createdAt: string;
+  isReassigned?: boolean;
+  originalDoctorId?: string;
+}
+
+export const getFollowUps = (): FollowUp[] => {
+  try {
+    const followUps = localStorage.getItem('followUps');
+    return followUps ? JSON.parse(followUps) : [];
+  } catch (error) {
+    console.error('Error getting follow-ups:', error);
+    return [];
+  }
+};
+
+export const addFollowUp = (followUp: Omit<FollowUp, 'id' | 'createdAt'>): FollowUp => {
+  const followUps = getFollowUps();
+  const newFollowUp: FollowUp = {
+    ...followUp,
+    id: `followup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    createdAt: new Date().toISOString()
+  };
+  
+  followUps.push(newFollowUp);
+  localStorage.setItem('followUps', JSON.stringify(followUps));
+  window.dispatchEvent(new CustomEvent('followUps:updated'));
+  return newFollowUp;
+};
+
+export const updateFollowUpStatus = (id: string, status: string): boolean => {
+  try {
+    const followUps = getFollowUps();
+    const index = followUps.findIndex(f => f.id === id);
+    
+    if (index !== -1) {
+      followUps[index].status = status as FollowUp['status'];
+      localStorage.setItem('followUps', JSON.stringify(followUps));
+      window.dispatchEvent(new CustomEvent('followUps:updated'));
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error updating follow-up status:', error);
+    return false;
+  }
+};
+
+export const getFollowUpsByPatient = (patientId: string): FollowUp[] => {
+  return getFollowUps().filter(f => f.patientId === patientId);
+};
+
+export const getFollowUpsByDoctor = (doctorId: string): FollowUp[] => {
+  return getFollowUps().filter(f => f.doctorId === doctorId);
+};
+
+export const getUpcomingFollowUps = (userId: string, userRole: 'patient' | 'doctor'): FollowUp[] => {
+  const now = new Date();
+  const followUps = userRole === 'patient' 
+    ? getFollowUpsByPatient(userId)
+    : getFollowUpsByDoctor(userId);
+    
+  return followUps.filter(f => {
+    const appointmentDate = new Date(`${f.date.split('T')[0]}T${f.time}:00`);
+    return appointmentDate > now && f.status === 'scheduled';
+  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+};
+
 export interface ChatMessage {
   id: string;
   sender: 'doctor' | 'patient';
@@ -369,8 +451,13 @@ export const clearPrescriptionsAll = (): void => {
   localStorage.removeItem('prescriptions');
   window.dispatchEvent(new CustomEvent('prescriptions:updated'));
 };
+export const clearFollowUpsAll = (): void => {
+  localStorage.removeItem('followUps');
+  window.dispatchEvent(new CustomEvent('followUps:updated'));
+};
 export const clearAllMedicalData = (): void => {
   clearAppointmentsAll();
   clearChatsAll();
   clearPrescriptionsAll();
+  clearFollowUpsAll();
 };

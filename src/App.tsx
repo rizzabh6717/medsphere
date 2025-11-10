@@ -39,6 +39,9 @@ import DoctorMessages from "./pages/DoctorMessages";
 
 // Payments
 import Payment from "./pages/Payment";
+import PrintPrescription from "./pages/PrintPrescription";
+import PrescriptionManagement from "./pages/PrescriptionManagement";
+import FollowUpDashboard from "./pages/FollowUpDashboard";
 
 const queryClient = new QueryClient();
 
@@ -79,7 +82,9 @@ const App = () => {
           <Route path="/patient/queue" element={<ProtectedRoute roles={['patient']}><QueueTracking /></ProtectedRoute>} />
           <Route path="/patient/profile" element={<ProtectedRoute roles={['patient']}><Profile /></ProtectedRoute>} />
           <Route path="/patient/records" element={<ProtectedRoute roles={['patient']}><Records /></ProtectedRoute>} />
+          <Route path="/patient/print-prescription/:id" element={<ProtectedRoute roles={['patient']}><PrintPrescription /></ProtectedRoute>} />
           <Route path="/patient/payment/:id" element={<ProtectedRoute roles={['patient']}><Payment /></ProtectedRoute>} />
+          <Route path="/patient/followups" element={<ProtectedRoute roles={['patient']}><FollowUpDashboard /></ProtectedRoute>} />
 
           {/* Doctor Routes */}
           <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
@@ -89,6 +94,9 @@ const App = () => {
           <Route path="/doctor/chat/:patientId" element={<ProtectedRoute roles={['doctor']}><DoctorChat /></ProtectedRoute>} />
           <Route path="/doctor/messages" element={<ProtectedRoute roles={['doctor']}><DoctorMessages /></ProtectedRoute>} />
           <Route path="/doctor/messages/:patientId" element={<ProtectedRoute roles={['doctor']}><DoctorMessages /></ProtectedRoute>} />
+          <Route path="/doctor/prescription/:appointmentId" element={<ProtectedRoute roles={['doctor']}><PrescriptionManagement /></ProtectedRoute>} />
+          <Route path="/doctor/print-prescription/:id" element={<ProtectedRoute roles={['doctor']}><PrintPrescription /></ProtectedRoute>} />
+          <Route path="/doctor/followups" element={<ProtectedRoute roles={['doctor']}><FollowUpDashboard /></ProtectedRoute>} />
 
           {/* Legacy redirects for backwards compatibility */}
           <Route path="/user" element={<Navigate to="/login" replace />} />
