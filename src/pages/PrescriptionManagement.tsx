@@ -20,9 +20,12 @@ import {
   Calendar,
   CalendarDays,
   User,
-  CheckCircle
+  CheckCircle,
+  Brain,
+  Loader2
 } from "lucide-react";
 import { getAppointments, getPrescriptions, savePrescription, addFollowUp } from "@/lib/storage";
+import { generateAIAnalysis } from "@/lib/ai";
 import jsPDF from 'jspdf';
 
 interface Medicine {
@@ -43,6 +46,11 @@ const PrescriptionManagement = () => {
   const [instructions, setInstructions] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // AI Analysis
+  const [aiText, setAiText] = useState<string>('');
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiError, setAiError] = useState<string>('');
   
   // Follow-up scheduling states
   const [selectedFollowUpDate, setSelectedFollowUpDate] = useState<Date | null>(null);
@@ -58,6 +66,21 @@ const PrescriptionManagement = () => {
       
       // Add first empty medicine row
       addMedicine();
+
+      // Kick off AI analysis if possible
+      void (async () => {
+        try {
+          setAiLoading(true);
+          setAiError('');
+          const symptoms = apt?.symptoms || '';
+          const { text } = await generateAIAnalysis({ symptoms });
+          setAiText(text);
+        } catch (e: any) {
+          setAiError(e?.message || 'Failed to generate analysis');
+        } finally {
+          setAiLoading(false);
+        }
+      })();
     }
   }, [appointmentId]);
 
@@ -451,6 +474,29 @@ const PrescriptionManagement = () => {
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             
+            {/* AI Analysis */}
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-blue-600" />
+                  AI Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {aiLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Generating analysis...
+                  </div>
+                ) : aiError ? (
+                  <div className="text-sm text-red-600">{aiError} — set VITE_GEMINI_API_KEY or sessionStorage.GEMINI_API_KEY</div>
+                ) : aiText ? (
+                  <div className="text-sm whitespace-pre-wrap leading-6 text-gray-800">{aiText}</div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">No analysis yet.</div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Diagnosis Card */}
             <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader className="pb-4">
