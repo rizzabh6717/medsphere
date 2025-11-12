@@ -25,7 +25,7 @@ import {
   Loader2
 } from "lucide-react";
 import { getAppointments, getPrescriptions, savePrescription, addFollowUp } from "@/lib/storage";
-import { generateAIAnalysis } from "@/lib/ai";
+import { analyzeSymptomsCharts, type ChartAnalysisResponse } from "@/lib/ai";
 import jsPDF from 'jspdf';
 
 interface Medicine {
@@ -47,8 +47,8 @@ const PrescriptionManagement = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // AI Analysis
-  const [aiText, setAiText] = useState<string>('');
+  // AI Visual Analysis (charts)
+  const [chartData, setChartData] = useState<ChartAnalysisResponse | null>(null);
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string>('');
   
@@ -67,14 +67,14 @@ const PrescriptionManagement = () => {
       // Add first empty medicine row
       addMedicine();
 
-      // Kick off AI analysis if possible
+      // Kick off chart-oriented AI analysis using only symptoms
       void (async () => {
         try {
           setAiLoading(true);
           setAiError('');
           const symptoms = apt?.symptoms || '';
-          const { text } = await generateAIAnalysis({ symptoms });
-          setAiText(text);
+          const res = await analyzeSymptomsCharts(symptoms);
+          setChartData(res);
         } catch (e: any) {
           setAiError(e?.message || 'Failed to generate analysis');
         } finally {
@@ -474,24 +474,81 @@ const PrescriptionManagement = () => {
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* AI Analysis */}
+            {/* AI Visual Health Summary — Symptom Insights */}
             <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
                   <Brain className="w-5 h-5 text-blue-600" />
-                  AI Analysis
+                  AI Visual Health Summary — Symptom Insights
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {aiLoading ? (
+                {aiLoading && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" /> Generating analysis...
                   </div>
-                ) : aiError ? (
+                )}
+                {!aiLoading && aiError && (
                   <div className="text-sm text-red-600">{aiError} — set VITE_GEMINI_API_KEY or sessionStorage.GEMINI_API_KEY</div>
-                ) : aiText ? (
-                  <div className="text-sm whitespace-pre-wrap leading-6 text-gray-800">{aiText}</div>
-                ) : (
+                )}
+                {!aiLoading && !aiError && chartData && (
+                  <div className="space-y-5">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Radar */}
+                      <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100 flex items-center justify-center">
+                        <div className="w-full flex flex-col items-center">
+                          <div className="font-semibold mb-2 self-start">Symptom Severity</div>
+                          {(() => {
+                            const axes = [
+                              { key: 'cough', label: 'Cough' },
+                              { key: 'fever', label: 'Fever' },
+                              { key: 'sore_throat', label: 'Sore Throat' },
+                              { key: 'fatigue', label: 'Fatigue' },
+                              { key: 'sore', label: 'Sore' },
+                            ];
+                            const R = 70; const CX = 120; const CY = 100;
+                            const val = (k: string) => Math.max(0, Math.min(100, Number(chartData.symptomScores?.[k]||0)));
+                            const pts = axes.map((a,i)=>{ const ang=(Math.PI*2*i)/axes.length - Math.PI/2; const r=(val(a.key)/100)*R; return [CX + r*Math.cos(ang), CY + r*Math.sin(ang)]; });
+                            const poly = pts.map((p,i)=>`${i===0?'M':'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')+' Z';
+                            return (
+                              <svg width="240" height="200" viewBox="0 0 240 200">
+                                {[0.25,0.5,0.75,1].map((f,idx)=>{ const r=R*f; const points=axes.map((a,i)=>{ const ang=(Math.PI*2*i)/axes.length - Math.PI/2; return [CX+r*Math.cos(ang), CY+r*Math.sin(ang)]; }); const d=points.map((p,i)=>`${i===0?'M':'L'}${p[0]},${p[1]}`).join(' ')+' Z'; return <path key={idx} d={d} fill="none" stroke="#e5e7eb"/>; })}
+                                {axes.map((a,i)=>{ const ang=(Math.PI*2*i)/axes.length - Math.PI/2; const r=R+16; const x=CX+r*Math.cos(ang); const y=CY+r*Math.sin(ang); return <text key={a.key} x={x} y={y} textAnchor="middle" fontSize="12" fill="#111827">{a.label}</text>; })}
+                                <path d={poly} fill="#60a5fa55" stroke="#3b82f6" strokeWidth="2" />
+                              </svg>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Bars */}
+                      <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100">
+                        <div className="font-semibold mb-2">Probable Diagnosis</div>
+                        <div className="space-y-6">
+                          {chartData.diagnoses.map((d,idx)=>{
+                            const barMax=100; const barW=180; const barH=12;
+                            return (
+                              <div key={idx}>
+                                <div className="text-sm mb-1 text-muted-foreground">{d.label}</div>
+                                <svg width={barW} height={barH}>
+                                  <rect x="0" y="0" width={barW} height={barH} rx="6" fill="#eef2ff" />
+                                  <rect x="0" y="0" width={Math.max(0, Math.min(barW, (d.score/barMax)*barW))} height={barH} rx="6" fill="#34d399" />
+                                </svg>
+                                <div className="text-xs text-muted-foreground">{Math.round(d.score)}%</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-gray-100">
+                      <div className="font-semibold mb-1">AI Summary</div>
+                      <div className="text-sm text-gray-800">{chartData.summary || '—'}</div>
+                    </div>
+                  </div>
+                )}
+                {!aiLoading && !aiError && !chartData && (
                   <div className="text-sm text-muted-foreground">No analysis yet.</div>
                 )}
               </CardContent>

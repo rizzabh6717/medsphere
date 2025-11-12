@@ -13,21 +13,104 @@ import {
   Star,
   Clock,
   Stethoscope,
-  CalendarDays
+  CalendarDays,
+  MessageCircle,
+  Send
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { generateChatReply, type ChatMessage } from "@/lib/ai";
+import { getPrescriptions, getAppointments, getFollowUps } from "@/lib/storage";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [userName, setUserName] = useState("Guest");
 
+  // Assistant chat state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [context, setContext] = useState<string>("");
+
+  // Build assistant context from recent records (prescriptions, appointments, follow-ups)
   useEffect(() => {
-    const profile = getUserProfile();
-    if (profile) {
-      setUserName(profile.name.split(' ')[0]); // Get first name
-    }
+    const normalize = (s: string) => (s || '').replace(/\D/g, '');
+
+    const buildContext = () => {
+      const profile = getUserProfile();
+      if (profile?.name) setUserName(profile.name.split(' ')[0]);
+      const phone = normalize(profile?.phone || '');
+      const name = (profile?.name || '').trim().toLowerCase();
+
+      // Prescriptions (by phone, fallback to name match)
+      const rxAll = getPrescriptions();
+      const rxCandidates = rxAll
+        .filter((r:any)=> phone ? normalize(r.patientPhone) === phone : true)
+        .concat(
+          phone ? [] : rxAll.filter((r:any)=> (r.patientName||'').trim().toLowerCase() === name)
+        );
+      const rxMine = rxCandidates
+        .sort((a:any,b:any)=> new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime())
+        .slice(0,3);
+      const rxLines = rxMine.map((r:any)=>{
+        const date = new Date(r.createdAt).toLocaleDateString('en-IN');
+        const diag = r.diagnosis || '-';
+        const meds = (r.items||[]).map((m:any)=> `${m.medicine}${m.dosage?` ${m.dosage}`:''}${m.duration?`; ${m.duration}`:''}`).join(', ');
+        const inst = r.instructions ? ` | Instructions: ${r.instructions}` : '';
+        return `${date} • Dx: ${diag} • Meds: ${meds}${inst}`;
+      }).join('\n');
+
+      // Appointments (by phone, fallback to name)
+      const apAll = getAppointments();
+      const apCandidates = apAll
+        .filter((a:any)=> phone ? normalize(a.patientPhone)===phone : true)
+        .concat(
+          phone ? [] : apAll.filter((a:any)=> (a.patientName||'').trim().toLowerCase() === name)
+        );
+      const apMine = apCandidates
+        .sort((a:any,b:any)=> new Date(b.date).getTime()-new Date(a.date).getTime())
+        .slice(0,3);
+      const apLines = apMine.map((a:any)=> `${new Date(a.date).toLocaleDateString('en-IN')} • ${a.time} • ${a.doctorName} (${a.doctorSpecialty||''}) • ${a.status}${a.symptoms?` • Symptoms: ${a.symptoms}`:''}`).join('\n');
+
+      // Follow-ups (by patientId == phone)
+      const fuAll = getFollowUps();
+      const fuMine = fuAll.filter((f:any)=> phone && normalize(f.patientId||'')===phone)
+        .sort((a:any,b:any)=> new Date(a.date).getTime()-new Date(b.date).getTime())
+        .slice(0,3);
+      const fuLines = fuMine.map((f:any)=> `${new Date(f.date).toLocaleDateString('en-IN')} ${f.time} • ${f.doctorName} • ${f.status}`).join('\n');
+
+      const ctx = [
+        `Patient: ${profile?.name||''}`,
+        rxLines ? `Recent Prescriptions:\n${rxLines}` : '',
+        apLines ? `Appointments:\n${apLines}` : '',
+        fuLines ? `Follow-ups:\n${fuLines}` : ''
+      ].filter(Boolean).join('\n\n');
+      setContext(ctx);
+    };
+
+    buildContext();
+    const handler = () => buildContext();
+    window.addEventListener('prescriptions:updated', handler);
+    window.addEventListener('appointments:updated', handler);
+    window.addEventListener('followUps:updated', handler);
+    return () => {
+      window.removeEventListener('prescriptions:updated', handler);
+      window.removeEventListener('appointments:updated', handler);
+      window.removeEventListener('followUps:updated', handler);
+    };
   }, []);
+
+  // Rebuild context when chat opens (in case data changed and no events fired)
+  useEffect(() => {
+    if (chatOpen) {
+      try {
+        // Trigger the existing effect by emitting a no-op event or simply rebuild inline by toggling state
+        const profile = getUserProfile();
+        setUserName(profile?.name?.split(' ')[0] || userName);
+      } catch {}
+    }
+  }, [chatOpen]);
 
   const allDoctors = [
     { id: 1,  name: "Dr. Prakash Das",    specialization: "Psychologist",       experience: "7+ years",  availability: "Available today", timing: "09:30 AM - 07:00 PM", rating: 4.8, patients: 500,  gender: 'male' },
@@ -182,13 +265,13 @@ onClick={() => navigate(`/patient/doctor/${doctor.id}`)}
               <Button 
                 className="w-full mt-4 rounded-xl bg-[#5B68EE] hover:bg-[#4A56DD]" 
                 size="lg"
-onClick={() => navigate('/patient/book-appointment', {
+                onClick={(e) => { e.stopPropagation(); navigate('/patient/book-appointment', {
                   state: { 
                     doctorId: doctor.id, 
                     doctorName: doctor.name, 
                     doctorSpecialty: doctor.specialization 
                   } 
-                })}
+                }); }}
               >
                 Book Appointment
               </Button>
@@ -196,6 +279,79 @@ onClick={() => navigate('/patient/book-appointment', {
           ))}
         </div>
       </div>
+
+      {/* Floating Assistant Button */}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-full bg-[#5B68EE] hover:bg-[#4A56DD] text-white shadow-lg flex items-center justify-center"
+        title="MedSphere Assistant"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </button>
+
+      {/* Assistant Floating Window */}
+      {chatOpen && (
+        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[92vw] h-[480px] rounded-2xl shadow-2xl border bg-white flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: '#5B68EE' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center text-xs font-bold text-[#5B68EE]">MS</div>
+              <div className="leading-tight">
+                <div className="text-white font-semibold">MedSphere Assistant</div>
+                <div className="text-white/90 text-[11px]">We typically reply in a few minutes</div>
+              </div>
+            </div>
+            <button onClick={() => setChatOpen(false)} className="text-white/90 hover:text-white text-xl leading-none">×</button>
+          </div>
+          {/* Messages */}
+          <div className="p-3 flex-1 overflow-y-auto space-y-3 bg-white">
+            {messages.length === 0 && (
+              <div className="text-xs text-muted-foreground">Hello and welcome to MedSphere! How can I help you today?</div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role==='user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`${m.role==='user' ? 'bg-[#5B68EE] text-white' : 'bg-gray-100 text-gray-800'} px-3 py-2 rounded-2xl max-w-[80%] whitespace-pre-wrap`}>{m.text}</div>
+              </div>
+            ))}
+            {typing && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 text-gray-600 px-3 py-2 rounded-2xl inline-flex items-center gap-1 text-xs">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-.2s]"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-.1s]"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Composer */}
+          <div className="p-3 border-t flex items-center gap-2 bg-white">
+            <Input value={chatInput} onChange={(e)=>setChatInput(e.target.value)} placeholder="Write a message" className="flex-1" />
+            <Button
+              onClick={async () => {
+                if (!chatInput.trim()) return;
+                const userMsg: ChatMessage = { role: 'user', text: chatInput.trim() };
+                const current = [...messages, userMsg];
+                setMessages(current);
+                setChatInput('');
+                setTyping(true);
+                try {
+                  const { text } = await generateChatReply(context, current, userMsg.text);
+                  setMessages(prev => [...prev, { role: 'model', text }]);
+                } catch (e:any) {
+                  setMessages(prev => [...prev, { role: 'model', text: 'Sorry, I could not reply right now.' }]);
+                } finally {
+                  setTyping(false);
+                }
+              }}
+              className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white"
+              size="icon"
+              title="Send"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border py-4 px-6">

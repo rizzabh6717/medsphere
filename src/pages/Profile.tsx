@@ -98,6 +98,7 @@ navigate("/user");
             <Button
               variant={isEditing ? "default" : "outline"}
               onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
+              className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white"
             >
               {isEditing ? (
                 <>
@@ -262,6 +263,7 @@ navigate("/user");
                     onCheckedChange={(checked) =>
                       setNotifications({ ...notifications, appointments: checked })
                     }
+                    className="data-[state=checked]:bg-[#5B68EE]"
                   />
                 </div>
 
@@ -277,6 +279,7 @@ navigate("/user");
                     onCheckedChange={(checked) =>
                       setNotifications({ ...notifications, reminders: checked })
                     }
+                    className="data-[state=checked]:bg-[#5B68EE]"
                   />
                 </div>
 
@@ -292,6 +295,7 @@ navigate("/user");
                     onCheckedChange={(checked) =>
                       setNotifications({ ...notifications, promotions: checked })
                     }
+                    className="data-[state=checked]:bg-[#5B68EE]"
                   />
                 </div>
 
@@ -307,6 +311,7 @@ navigate("/user");
                     onCheckedChange={(checked) =>
                       setNotifications({ ...notifications, updates: checked })
                     }
+                    className="data-[state=checked]:bg-[#5B68EE]"
                   />
                 </div>
               </div>
@@ -382,7 +387,7 @@ navigate("/user");
         <Card className="p-4 mt-6">
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full bg-[#5B68EE] hover:bg-[#4A56DD] text-white"
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4 mr-2" />

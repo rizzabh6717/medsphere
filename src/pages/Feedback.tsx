@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Star, ThumbsUp, ThumbsDown } from "lucide-react";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
+import { addReview, getAppointments } from "@/lib/storage";
 
 const Feedback = () => {
-  const { appointmentId } = useParams();
+  const { id } = useParams();
+  const appointmentId = id as string | undefined;
   const navigate = useNavigate();
+
+  const [apt, setApt] = useState<any | null>(null);
+  useEffect(() => {
+    const a = getAppointments().find(x => x.id === appointmentId);
+    setApt(a || null);
+  }, [appointmentId]);
   
   const [doctorFeedback, setDoctorFeedback] = useState({
     rating: 0,
@@ -28,11 +36,15 @@ const Feedback = () => {
     comments: "",
   });
 
-  const appointment = {
-    doctor: "Dr. Prakash Das",
-    specialty: "Cardiologist",
-    date: "Dec 15, 2024",
-  };
+  const appointment = useMemo(() => {
+    if (!apt) return null;
+    return {
+      doctor: apt.doctorName,
+      specialty: apt.doctorSpecialty,
+      date: new Date(apt.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: apt.time,
+    };
+  }, [apt]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,10 +52,25 @@ const Feedback = () => {
       toast.error("Please provide a rating");
       return;
     }
+    if (!apt) {
+      toast.error("Appointment not found");
+      return;
+    }
+    addReview({
+      doctorId: String(apt.doctorId || ''),
+      doctorName: apt.doctorName,
+      patientName: apt.patientName,
+      patientPhone: apt.patientPhone,
+      appointmentId: apt.id,
+      rating: doctorFeedback.rating,
+      text: doctorFeedback.comments,
+      appointmentDate: apt.date,
+      appointmentTime: apt.time,
+    });
     toast.success("Thank you for your feedback!");
     setTimeout(() => {
-navigate("/patient/appointments")
-    }, 1500);
+      navigate("/patient/appointments");
+    }, 800);
   };
 
   return (
@@ -54,8 +81,8 @@ navigate("/patient/appointments")
 
         <Card className="p-6 mb-6 animate-fade-in">
           <div className="mb-4">
-            <h3 className="font-semibold text-lg">{appointment.doctor}</h3>
-            <p className="text-sm text-muted-foreground">{appointment.specialty} • {appointment.date}</p>
+            <h3 className="font-semibold text-lg">{appointment?.doctor || 'Doctor'}</h3>
+            <p className="text-sm text-muted-foreground">{appointment?.specialty || ''} • {appointment?.date || ''}{appointment?.time ? `, ${appointment.time}` : ''}</p>
           </div>
         </Card>
 
@@ -135,7 +162,7 @@ navigate("/patient/appointments")
 
               <div>
                 <Label className="text-base mb-3 block">
-                  Would you recommend {appointment.doctor} to your friends?
+                  Would you recommend {appointment?.doctor || 'this doctor'} to your friends?
                 </Label>
                 <div className="flex gap-3">
                   <Button
@@ -236,7 +263,7 @@ navigate("/patient/appointments")
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/appointments")}
+              onClick={() => navigate("/patient/appointments")}
               className="flex-1"
             >
               Skip

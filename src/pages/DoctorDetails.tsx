@@ -5,26 +5,30 @@ import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Briefcase, Users, Award, Clock } from "lucide-react";
 import NavigationHeader from "@/components/NavigationHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DOCTORS } from "@/lib/doctors";
 
 const DoctorDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock doctor data
+  const docId = Number(id);
+  const base = DOCTORS.find(d => d.id === docId);
+
+  // Build doctor data from DOCTORS with sensible fallbacks
   const doctor = {
-    id,
-    name: "Dr. Prakash Das",
-    specialty: "Cardiologist",
-    education: "MBBS, MD (Cardiology)",
-    experience: 15,
-    patientsTreated: 5000,
-    rating: 4.8,
-    reviews: 234,
+    id: docId,
+    name: base?.name || "Doctor",
+    specialty: base?.specialization || "General Physician",
+    education: base ? `MBBS, MD (${base.specialization})` : "MBBS",
+    experience: 10,
+    patientsTreated: 2000,
+    rating: 4.7,
+    reviews: 120,
     location: "Apollo Hospital, Mumbai",
     availability: "Available Today",
     consultationFee: 500,
-    about: "Dr. Prakash Das is a highly experienced cardiologist with over 15 years of practice. He specializes in preventive cardiology, heart failure management, and interventional procedures.",
-    languages: ["English", "Hindi", "Marathi"],
+    about: base ? `${base.name} is an experienced ${base.specialization.toLowerCase()} with a focus on patient-centered care.` : "Experienced physician.",
+    languages: ["English", "Hindi"],
   };
 
   return (
@@ -110,7 +114,7 @@ onClick={() => navigate("/patient/dashboard")}
               </div>
               <Button 
                 size="lg"
-onClick={() => navigate('/patient/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
+                onClick={() => navigate('/patient/book-appointment', { state: { doctorId: doctor.id, doctorName: doctor.name, doctorSpecialty: doctor.specialty } })}
                 className="px-8 bg-[#5B68EE] hover:bg-[#4A56DD]"
               >
                 <Clock className="w-4 h-4 mr-2" />

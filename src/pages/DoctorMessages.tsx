@@ -71,7 +71,6 @@ const DoctorMessages = () => {
     { icon: Calendar, label: "Schedule", value: "schedule", to: "/doctor/dashboard" },
     { icon: Users, label: "Patients", value: "patients", to: "/doctor/dashboard" },
     { icon: MessageCircle, label: "Messages", value: "messages", to: "/doctor/messages" },
-    { icon: Pill, label: "Medicines", value: "medicines", to: "/doctor/dashboard" },
   ];
 
   const activeThread = threads.find(t => t.patientPhone === activePhone);

@@ -7,9 +7,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { addPrescription, ensureChatThread, updateAppointment, getAppointments, clearAllMedicalData, addFollowUp } from "@/lib/storage";
+import { addPrescription, ensureChatThread, updateAppointment, getAppointments, clearAllMedicalData, addFollowUp, getReviewsByDoctor } from "@/lib/storage";
 import { toast } from "sonner";
-import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2 } from "lucide-react";
+import { Bell, HelpCircle, Settings, LayoutDashboard, Calendar, Users, MessageSquare, Pill, LogOut, User, FileText, Heart, Phone, MessageCircle, Check, X, Menu, ChevronLeft, ChevronRight, Scan, Stethoscope, CheckCircle2, Star } from "lucide-react";
 import DoctorWeekCalendar from "@/components/DoctorWeekCalendar";
 
 const DoctorDashboard = () => {
@@ -20,6 +20,11 @@ const DoctorDashboard = () => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
   const acceptedAppointments = appointments.filter(a => a.accepted && a.status !== 'cancelled');
+  const [reviews, setReviews] = useState<any[]>([]);
+  // Reviews filters
+  const [revDate, setRevDate] = useState<string>("");
+  const [revMinRating, setRevMinRating] = useState<string>("all"); // 'all' | '1'..'5'
+  const [revType, setRevType] = useState<'all'|'checkup'|'consultation'|'followup'|'procedure'>("all");
   const [stats, setStats] = useState([
     { label: "Patients", value: 0, icon: Users, color: "bg-purple-500" },
     { label: "Records", value: 0, icon: FileText, color: "bg-blue-500" },
@@ -87,7 +92,7 @@ const DoctorDashboard = () => {
     { icon: Calendar, label: "Schedule", value: "schedule" },
     { icon: Users, label: "Patients", value: "patients" },
     { icon: MessageSquare, label: "Messages", value: "messages" },
-    { icon: Pill, label: "Medicines", value: "medicines" },
+    { icon: Star, label: "Reviews", value: "reviews" },
     { icon: Scan, label: "Body View", value: "bodyview" },
   ];
 
@@ -199,6 +204,18 @@ const DoctorDashboard = () => {
       setAppointments(filtered);
       const todays = filtered.filter((a: any) => sameDay(a.date, new Date()) && a.status === 'upcoming' && a.accepted);
       setTodayAppointments(todays);
+      // Load reviews for this doctor and enrich with appointment type
+      let revs = profile.id === 'unknown' ? [] : getReviewsByDoctor(profile.id);
+      try {
+        const byId: Record<string, any> = {};
+        allApts.forEach((a:any)=> byId[a.id] = a);
+        revs = revs.map((r:any)=>{
+          const apt = r.appointmentId ? byId[r.appointmentId] : undefined;
+          const t = apt ? typeOfApt(apt.symptoms) : 'consultation';
+          return { ...r, aptType: t };
+        });
+      } catch {}
+      setReviews(revs.sort((a:any,b:any)=> new Date(b.createdAt||b.appointmentDate||0).getTime() - new Date(a.createdAt||a.appointmentDate||0).getTime()));
       const totalPatients = new Set(filtered.map(a => a.patientPhone)).size;
       const totalAppointments = filtered.length;
       const completed = filtered.filter(a => a.status === 'completed').length;
@@ -212,7 +229,11 @@ const DoctorDashboard = () => {
     load();
     const handler = () => load();
     window.addEventListener('appointments:updated', handler);
-    return () => window.removeEventListener('appointments:updated', handler);
+    window.addEventListener('reviews:updated', handler);
+    return () => {
+      window.removeEventListener('appointments:updated', handler);
+      window.removeEventListener('reviews:updated', handler);
+    };
   }, []);
 
   return (
@@ -560,8 +581,8 @@ const DoctorDashboard = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold">Schedule</h2>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => { clearAllMedicalData(); toast.success('Cleared appointments, chats, and records'); }}>Clear Data</Button>
-                    <Button variant="outline" onClick={() => setSelectedDate(new Date())}>Today</Button>
+                    <Button variant="outline" onClick={() => { clearAllMedicalData(); toast.success('Cleared appointments, chats, records, follow-ups, and reviews'); }}>Clear Data</Button>
+                    <Button variant="outline" onClick={() => setSelectedDate(new Date())} className="bg-[#5B68EE] hover:bg-[#4A56DD] text-white">Today</Button>
                     <Button variant="outline" size="icon" onClick={() => setSelectedDate(new Date(new Date(selectedDate).setDate(selectedDate.getDate()-1)))}><ChevronLeft className="w-4 h-4"/></Button>
                     <Button variant="outline" size="icon" onClick={() => setSelectedDate(new Date(new Date(selectedDate).setDate(selectedDate.getDate()+1)))}><ChevronRight className="w-4 h-4"/></Button>
                     <Button variant={viewMode === 'day' ? 'default' : 'outline'} onClick={() => setViewMode('day')} className={viewMode==='day'? 'bg-[#5B68EE] hover:bg-[#4A56DD]':''}>Day</Button>
@@ -824,10 +845,129 @@ const DoctorDashboard = () => {
             </div>
           )}
 
-          {activeTab === "medicines" && (
-            <div className="bg-card rounded-2xl shadow-card p-6 text-muted-foreground">
-              <h2 className="text-xl font-bold mb-2 text-foreground">Medicines</h2>
-              <p>Common medicines and dosage templates (placeholder).</p>
+          {activeTab === "reviews" && (
+            <div className="space-y-4">
+              <div className="bg-card rounded-2xl shadow-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-foreground">Reviews</h2>
+                  <div className="text-sm text-muted-foreground">
+                    {reviews.length} review{reviews.length!==1?'s':''}
+                  </div>
+                </div>
+
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+                  <Input type="date" value={revDate} onChange={(e)=>setRevDate(e.target.value)} placeholder="Date" />
+                  <Select value={revMinRating} onValueChange={(v)=>setRevMinRating(v)}>
+                    <SelectTrigger><SelectValue placeholder="Min rating" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All ratings</SelectItem>
+                      <SelectItem value="1">1+</SelectItem>
+                      <SelectItem value="2">2+</SelectItem>
+                      <SelectItem value="3">3+</SelectItem>
+                      <SelectItem value="4">4+</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={revType} onValueChange={(v:any)=>setRevType(v)}>
+                    <SelectTrigger><SelectValue placeholder="Appointment type" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All types</SelectItem>
+                      <SelectItem value="consultation">Consultation</SelectItem>
+                      <SelectItem value="checkup">Check-up</SelectItem>
+                      <SelectItem value="followup">Follow-up</SelectItem>
+                      <SelectItem value="procedure">Procedure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" onClick={()=>{ setRevDate(''); setRevMinRating('all'); setRevType('all'); }}>Clear</Button>
+                </div>
+
+                {/* Summary + analytics */}
+                {(() => {
+                  if (!reviews.length) return <div className="text-muted-foreground">No reviews yet.</div>;
+                  const avg = (reviews.reduce((s:any,r:any)=> s + (Number(r.rating)||0), 0) / reviews.length).toFixed(1);
+                  // Build filtered list
+                  const minR = revMinRating === 'all' ? 0 : Number(revMinRating);
+                  const filtered = reviews.filter((r:any)=>{
+                    const ts = new Date(r.appointmentDate || r.createdAt);
+                    const d = `${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,'0')}-${String(ts.getDate()).padStart(2,'0')}`;
+                    const dateOk = revDate ? (d === revDate) : true;
+                    const typeOk = revType === 'all' ? true : (r.aptType === revType);
+                    return dateOk && (Number(r.rating)||0) >= minR && typeOk;
+                  });
+                  const ratingCounts = [1,2,3,4,5].map(n => filtered.filter((r:any)=> Math.round(Number(r.rating)||0) === n).length);
+                  const typeCounts: Record<string, number> = { consultation:0, checkup:0, followup:0, procedure:0 };
+                  filtered.forEach((r:any)=>{ if (typeCounts[r.aptType]!=null) typeCounts[r.aptType]++; });
+                  const bar = (value:number, max:number, color:string) => (
+                    <div className="h-2 rounded" style={{ width: `${max?Math.round((value/max)*100):0}%`, backgroundColor: color }} />
+                  );
+                  const maxRating = Math.max(...ratingCounts, 1);
+                  const maxType = Math.max(...Object.values(typeCounts), 1);
+                  return (
+                    <>
+                      <div className="flex items-center gap-2 text-foreground mb-4">
+                        <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                        <span className="font-semibold">{avg}</span>
+                        <span className="text-muted-foreground text-sm">/ 5 average • {filtered.length} shown</span>
+                      </div>
+                      {/* mini analytics */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div className="bg-secondary rounded-xl p-4">
+                          <div className="text-sm font-semibold mb-2">Rating distribution</div>
+                          <div className="space-y-2">
+                            {[5,4,3,2,1].map((n,idx)=> (
+                              <div key={n} className="flex items-center gap-2 text-xs">
+                                <span className="w-6">{n}★</span>
+                                <div className="flex-1 bg-background rounded h-2">{bar(ratingCounts[n-1], maxRating, '#f59e0b')}</div>
+                                <span className="w-8 text-right">{ratingCounts[n-1]}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="bg-secondary rounded-xl p-4">
+                          <div className="text-sm font-semibold mb-2">By appointment type</div>
+                          <div className="space-y-2 text-xs">
+                            {(['consultation','checkup','followup','procedure'] as const).map((t)=> (
+                              <div key={t} className="flex items-center gap-2">
+                                <span className="capitalize w-24">{t}</span>
+                                <div className="flex-1 bg-background rounded h-2">{bar(typeCounts[t], maxType, '#5B68EE')}</div>
+                                <span className="w-8 text-right">{typeCounts[t]}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filtered.map((rev:any) => (
+                          <div key={rev.id} className="p-4 bg-secondary rounded-xl shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-semibold text-foreground">{rev.patientName || 'Patient'}</div>
+                              <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map(i => (
+                                  <Star key={i} className={`w-4 h-4 ${i <= (rev.rating||0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground mb-1 capitalize">{rev.aptType || 'consultation'}</div>
+                            {rev.text && (
+                              <p className="text-sm text-foreground mb-3 line-clamp-4">{rev.text}</p>
+                            )}
+                            <div className="text-xs text-muted-foreground">
+                              {rev.appointmentDate ? new Date(rev.appointmentDate).toLocaleDateString('en-IN',{ month:'short', day:'numeric', year:'numeric'}) : ''}
+                              {rev.appointmentTime ? `, ${rev.appointmentTime}` : ''}
+                            </div>
+                          </div>
+                        ))}
+                        {filtered.length === 0 && (
+                          <div className="col-span-full text-center text-muted-foreground py-8">No reviews match the filters.</div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
           )}
         </div>

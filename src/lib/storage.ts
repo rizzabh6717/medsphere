@@ -435,6 +435,62 @@ export const ensureChatThread = (doctorId: string, patientPhone: string): ChatTh
   return thread;
 };
 
+// --------- Reviews (patient feedback) ---------
+export interface Review {
+  id: string;
+  doctorId: string;
+  doctorName?: string;
+  patientName: string;
+  patientPhone?: string;
+  appointmentId?: string;
+  rating: number; // 1-5
+  text?: string; // review comments
+  appointmentDate?: string; // ISO
+  appointmentTime?: string; // e.g., 10:30 AM
+  createdAt: string;
+}
+
+export const getReviews = (): Review[] => {
+  try {
+    const dataNS = localStorage.getItem(nsKey('reviews'));
+    const nsList: Review[] = dataNS ? JSON.parse(dataNS) : [];
+    const dataGlobal = localStorage.getItem('reviews');
+    const globalList: Review[] = dataGlobal ? JSON.parse(dataGlobal) : [];
+    if (!nsList.length) return globalList;
+    if (!globalList.length) return nsList;
+    const byId: Record<string, Review> = {};
+    [...globalList, ...nsList].forEach((r) => { byId[r.id] = r; });
+    return Object.values(byId);
+  } catch (e) {
+    console.error('Error reading reviews:', e);
+    return [];
+  }
+};
+
+export const addReview = (r: Omit<Review, 'id' | 'createdAt'>): Review => {
+  const item: Review = { ...r, id: `rev-${Date.now()}`, createdAt: new Date().toISOString() };
+  // Save to namespaced (patient) list
+  try {
+    const nsRaw = localStorage.getItem(nsKey('reviews'));
+    const nsList: Review[] = nsRaw ? JSON.parse(nsRaw) : [];
+    nsList.push(item);
+    localStorage.setItem(nsKey('reviews'), JSON.stringify(nsList));
+  } catch {}
+  // Also save to shared global list so doctors can view
+  try {
+    const globalRaw = localStorage.getItem('reviews');
+    const globalList: Review[] = globalRaw ? JSON.parse(globalRaw) : [];
+    globalList.push(item);
+    localStorage.setItem('reviews', JSON.stringify(globalList));
+  } catch {}
+  window.dispatchEvent(new CustomEvent('reviews:updated'));
+  return item;
+};
+
+export const getReviewsByDoctor = (doctorId: string): Review[] => {
+  return getReviews().filter(r => String(r.doctorId) === String(doctorId));
+};
+
 // --------- Clear helpers (for demo/testing) ---------
 export const clearAppointmentsAll = (): void => {
   localStorage.removeItem(nsKey('appointments'));
@@ -455,9 +511,15 @@ export const clearFollowUpsAll = (): void => {
   localStorage.removeItem('followUps');
   window.dispatchEvent(new CustomEvent('followUps:updated'));
 };
+export const clearReviewsAll = (): void => {
+  localStorage.removeItem(nsKey('reviews'));
+  localStorage.removeItem('reviews');
+  window.dispatchEvent(new CustomEvent('reviews:updated'));
+};
 export const clearAllMedicalData = (): void => {
   clearAppointmentsAll();
   clearChatsAll();
   clearPrescriptionsAll();
   clearFollowUpsAll();
+  clearReviewsAll();
 };
